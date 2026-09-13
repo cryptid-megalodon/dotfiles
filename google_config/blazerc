@@ -1,4 +1,0 @@
-test --test_output=errors
-# Enable this for building PPGS except for the EML playground which requires
-# fastbuild. http://screen/7LX9jHuygxS8N2S
-# import %workspace%/video/youtube/testing/end2end/ppg/blazerc
