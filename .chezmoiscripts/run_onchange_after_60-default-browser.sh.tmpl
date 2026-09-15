@@ -1,0 +1,26 @@
+#!/bin/sh
+# Sets the OS default web browser to Firefox. Reruns if this script changes.
+set -eu
+
+{{ if eq .chezmoi.os "linux" -}}
+if ! command -v xdg-settings >/dev/null 2>&1; then
+    echo "==> xdg-settings not available, skipping default browser"
+    exit 0
+fi
+
+desktop_file=""
+for candidate in firefox.desktop firefox_firefox.desktop; do
+    if [ -f "/usr/share/applications/$candidate" ] || [ -f "/var/lib/snapd/desktop/applications/$candidate" ] || [ -f "$HOME/.local/share/applications/$candidate" ]; then
+        desktop_file="$candidate"
+        break
+    fi
+done
+
+if [ -z "$desktop_file" ]; then
+    echo "==> Firefox not installed, skipping default browser"
+    exit 0
+fi
+
+xdg-settings set default-web-browser "$desktop_file"
+echo "==> Set default web browser to $desktop_file"
+{{ end -}}
