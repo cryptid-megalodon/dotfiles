@@ -15,6 +15,7 @@ packages:
       - jq
       - node
       - go
+      - gh
     casks:
       - ghostty
       - visual-studio-code
@@ -36,6 +37,16 @@ packages:
     - zlib1g-dev
     - vlc
     - deluge
+    - gh            # from the github-cli repo below, never the snap
+  # Third-party apt repos, set up before `apt-get install`. Pinned above
+  # Ubuntu Pro ESM so the upstream build wins.
+  apt_repos:
+    - name: github-cli
+      key_url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+      uri: https://cli.github.com/packages
+      suite: stable
+      components: main
+      pin_origin: cli.github.com
   snap:
     - name: code
       classic: true

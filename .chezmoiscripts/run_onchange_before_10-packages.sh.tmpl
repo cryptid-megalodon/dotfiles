@@ -15,6 +15,15 @@ cask {{ . | quote }}
 {{ end -}}
 BREWFILE
 {{ else if eq .chezmoi.os "linux" -}}
+{{ range .packages.apt_repos -}}
+echo "==> apt repo {{ .name }}"
+sudo mkdir -p -m 755 /etc/apt/keyrings
+[ -f /etc/apt/keyrings/{{ .name }}.gpg ] || curl -fsSL {{ .key_url }} | sudo tee /etc/apt/keyrings/{{ .name }}.gpg >/dev/null
+sudo chmod 644 /etc/apt/keyrings/{{ .name }}.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/{{ .name }}.gpg] {{ .uri }} {{ .suite }} {{ .components }}" | sudo tee /etc/apt/sources.list.d/{{ .name }}.list >/dev/null
+printf 'Package: *\nPin: origin {{ .pin_origin }}\nPin-Priority: 1001\n' | sudo tee /etc/apt/preferences.d/{{ .name }} >/dev/null
+{{ end -}}
+
 echo "==> apt install"
 sudo apt-get update
 sudo apt-get install -y {{ .packages.apt | join " " }}
