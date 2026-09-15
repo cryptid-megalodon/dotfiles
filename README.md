@@ -38,7 +38,7 @@ Machine-specific shell bits that shouldn't be in the repo go in `~/.zshrc.local`
 | `.chezmoi.toml.tmpl` | First-run prompts (machine type, email, Bitwarden) |
 | `.chezmoiignore` | Skips mac-only paths on Linux and vice versa |
 | `.chezmoidata/packages.yaml` | Everything that gets installed (brew, apt, snap, VS Code extensions) |
-| `.chezmoiscripts/` | Bootstrap, package install, extensions, Firefox policies, default shell |
+| `.chezmoiscripts/` | Bootstrap, package install, extensions, Firefox policies, default shell, GNOME terminal shortcut |
 | `.chezmoitemplates/` | Shared template fragments (VS Code settings rendered to both OS paths) |
 | `dot_zshrc.tmpl`, `dot_tmux.conf` | Shell and tmux |
 | `dot_config/` | ghostty, starship, nvim, opencode, VS Code (Linux path) |
