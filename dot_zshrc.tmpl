@@ -1,0 +1,65 @@
+# ~/.zshrc — managed by chezmoi; edit with `chezmoi edit ~/.zshrc`.
+
+# --- Path ---------------------------------------------------------------------
+{{ if eq .chezmoi.os "darwin" -}}
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+{{ end -}}
+export PATH="$HOME/.local/bin:$PATH"
+
+# --- History ------------------------------------------------------------------
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE SHARE_HISTORY APPEND_HISTORY
+
+# --- Options ------------------------------------------------------------------
+setopt AUTO_CD PIPE_FAIL
+bindkey -v                      # vi keybindings
+export KEYTIMEOUT=1
+
+# --- Completion ---------------------------------------------------------------
+autoload -Uz compinit && compinit
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+
+# --- Editor -------------------------------------------------------------------
+export EDITOR='nvim'
+export VISUAL='nvim'
+alias v='nvim'
+alias vim='nvim'
+
+# --- Aliases ------------------------------------------------------------------
+{{ if eq .chezmoi.os "darwin" -}}
+alias ls='ls -G'
+{{ else -}}
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias i='sudo apt-get install'
+alias m='amixer sset Master toggle'
+{{ end -}}
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias cm='chezmoi'
+
+# Parses a unix timestamp to YYYYMMDD.
+datets() {
+{{ if eq .chezmoi.os "darwin" -}}
+  date -r "$1" +%Y%m%d
+{{ else -}}
+  date +%Y%m%d --date @"$1"
+{{ end -}}
+}
+
+# --- Tools --------------------------------------------------------------------
+command -v fzf >/dev/null && eval "$(fzf --zsh 2>/dev/null)"
+
+# conda (only if installed on this machine)
+if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+  . "$HOME/miniconda3/etc/profile.d/conda.sh"
+fi
+
+# Local, machine-specific overrides that don't belong in the repo.
+[ -f "$HOME/.zshrc.local" ] && . "$HOME/.zshrc.local"
+
+# --- Prompt (keep last) -------------------------------------------------------
+command -v starship >/dev/null && eval "$(starship init zsh)"

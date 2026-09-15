@@ -1,0 +1,50 @@
+{
+  "workbench.colorTheme": "Dracula",
+  "workbench.startupEditor": "none",
+  "telemetry.telemetryLevel": "off",
+  "security.workspace.trust.untrustedFiles": "open",
+  "chat.commandCenter.enabled": false,
+
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.inlineSuggest.enabled": true,
+  "editor.inlineSuggest.suppressSuggestions": true,
+  "editor.mouseWheelScrollSensitivity": 3,
+  "editor.fastScrollSensitivity": 6,
+  "files.autoSave": "onFocusChange",
+  "explorer.confirmDelete": false,
+  "diffEditor.ignoreTrimWhitespace": false,
+
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+
+  "terminal.integrated.inheritEnv": false,
+{{- if eq .chezmoi.os "darwin" }}
+  "terminal.integrated.defaultProfile.osx": "zsh",
+{{- else }}
+  "terminal.integrated.defaultProfile.linux": "zsh",
+{{- end }}
+
+  "[python]": {
+    "editor.formatOnType": true,
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "python.createEnvironment.trigger": "off",
+
+  "go.formatTool": "gofmt",
+  "go.lintOnSave": "file",
+  "go.toolsManagement.autoUpdate": true,
+
+  "claudeCode.preferredLocation": "panel",
+
+  "yaml.disableSchemaDetection": [
+    "**/docker-compose.yml",
+    "**/docker-compose.yaml",
+    "**/docker-compose.*.yml",
+    "**/docker-compose.*.yaml",
+    "**/compose.yml",
+    "**/compose.yaml",
+    "**/compose.*.yml",
+    "**/compose.*.yaml"
+  ]
+}

@@ -1,0 +1,34 @@
+#!/bin/sh
+# Reruns whenever .chezmoidata/packages.yaml changes.
+# packages.yaml hash: {{ include ".chezmoidata/packages.yaml" | sha256sum }}
+set -eu
+
+{{ if eq .chezmoi.os "darwin" -}}
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+echo "==> brew bundle"
+brew bundle --file=- <<'BREWFILE'
+{{ range .packages.brew.formulae -}}
+brew {{ . | quote }}
+{{ end -}}
+{{ range .packages.brew.casks -}}
+cask {{ . | quote }}
+{{ end -}}
+BREWFILE
+{{ else if eq .chezmoi.os "linux" -}}
+echo "==> apt install"
+sudo apt-get update
+sudo apt-get install -y {{ .packages.apt | join " " }}
+
+{{ if lookPath "snap" -}}
+echo "==> snap install"
+{{ range .packages.snap -}}
+snap list {{ .name }} >/dev/null 2>&1 || sudo snap install {{ .name }}{{ if and (hasKey . "classic") .classic }} --classic{{ end }}
+{{ end -}}
+{{ end -}}
+
+# Not packaged for Debian/Ubuntu; use the upstream installer.
+if ! command -v starship >/dev/null 2>&1; then
+    echo "==> Installing starship"
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir "$HOME/.local/bin"
+fi
+{{ end -}}

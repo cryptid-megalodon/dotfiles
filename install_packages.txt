@@ -1,9 +1,0 @@
-build-essential
-chromium
-deluge
-node
-npm
-ruby-full
-vim
-vlc
-zlib1g-dev

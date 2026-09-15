@@ -1,0 +1,38 @@
+#!/bin/sh
+# Writes Firefox enterprise policies (https://mozilla.github.io/policy-templates/).
+# Reruns whenever the policy JSON below changes.
+set -eu
+
+{{ if eq .chezmoi.os "darwin" -}}
+dir="/Applications/Firefox.app/Contents/Resources/distribution"
+[ -d /Applications/Firefox.app ] || { echo "==> Firefox not installed, skipping policies"; exit 0; }
+{{ else -}}
+# Read by both the deb and the snap on Ubuntu.
+dir="/etc/firefox/policies"
+{{ end -}}
+
+sudo mkdir -p "$dir"
+sudo tee "$dir/policies.json" >/dev/null <<'POLICIES'
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "DontCheckDefaultBrowser": true,
+    "NoDefaultBookmarks": true,
+    "ExtensionSettings": {
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      },
+      "{446900e4-71c2-419f-a6a7-df9c091e268b}": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi"
+      }
+    }
+  }
+}
+POLICIES
+echo "==> Wrote $dir/policies.json"

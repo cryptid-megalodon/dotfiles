@@ -1,0 +1,61 @@
+# Single source of truth for what gets installed.
+# Edited here -> `chezmoi apply` reruns the package script (run_onchange).
+packages:
+  # Homebrew (macOS). Formulae are CLI tools, casks are GUI apps.
+  brew:
+    formulae:
+      - git
+      - zsh
+      - tmux
+      - neovim
+      - starship
+      - ripgrep
+      - fd
+      - fzf
+      - jq
+      - node
+      - go
+    casks:
+      - ghostty
+      - visual-studio-code
+      - firefox
+      - bitwarden
+
+  # Linux (Debian/Ubuntu).
+  apt:
+    - build-essential
+    - git
+    - curl
+    - zsh
+    - tmux
+    - neovim
+    - ripgrep
+    - fd-find
+    - fzf
+    - jq
+    - zlib1g-dev
+    - vlc
+    - deluge
+  snap:
+    - name: code
+      classic: true
+    - name: ghostty
+      classic: true
+    - name: firefox
+
+  # Installed via `code --install-extension`.
+  vscode_extensions:
+    - anthropic.claude-code
+    - charliermarsh.ruff
+    - dnut.rewrap-revived
+    - docker.docker
+    - dracula-theme.theme-dracula
+    - golang.go
+    - ms-azuretools.vscode-containers
+    - ms-python.debugpy
+    - ms-python.python
+    - ms-python.vscode-pylance
+    - ms-toolsai.jupyter
+    - ms-vscode-remote.remote-containers
+    - redhat.vscode-yaml
+    - vscodevim.vim

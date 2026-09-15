@@ -1,0 +1,15 @@
+#!/bin/sh
+# Runs once per machine: make zsh the login shell.
+set -eu
+
+zsh_path=$(command -v zsh)
+[ -n "$zsh_path" ] || { echo "==> zsh not found, skipping"; exit 0; }
+
+{{ if eq .chezmoi.os "linux" -}}
+grep -qx "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+{{ end -}}
+
+if [ "${SHELL:-}" != "$zsh_path" ]; then
+    echo "==> Setting default shell to $zsh_path"
+    chsh -s "$zsh_path"
+fi

@@ -1,0 +1,14 @@
+# Repo-only files; never copied into $HOME.
+README.md
+AGENTS.md
+LICENSE
+
+{{ if ne .chezmoi.os "darwin" }}
+# macOS-only paths.
+Library
+{{ end }}
+
+{{ if ne .chezmoi.os "linux" }}
+# Linux-only paths.
+.config/Code
+{{ end }}

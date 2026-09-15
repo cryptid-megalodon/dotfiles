@@ -1,0 +1,15 @@
+{{/* Prompts run once on first `chezmoi init`; answers are saved to ~/.config/chezmoi/chezmoi.toml. */}}
+{{- $machine := promptChoiceOnce . "machine" "Machine type" (list "personal" "work") -}}
+{{- $email := promptStringOnce . "email" "Email address" -}}
+{{- $bitwarden := promptBoolOnce . "bitwarden" "Use Bitwarden for secrets" -}}
+
+[data]
+    machine = {{ $machine | quote }}
+    email = {{ $email | quote }}
+    bitwarden = {{ $bitwarden }}
+
+[diff]
+    exclude = ["scripts"]
+
+[edit]
+    command = "nvim"

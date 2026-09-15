@@ -1,0 +1,21 @@
+# Starship — https://starship.rs/config
+# Mirrors the old bash prompt: "➜  ~ (main) $"
+format = "$directory$git_branch$git_status$python$character"
+
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
+vimcmd_symbol = "[❮](bold yellow)"
+
+[directory]
+style = "bold blue"
+truncation_length = 3
+
+[git_branch]
+format = "[($branch)](cyan) "
+
+[git_status]
+format = "[$all_status$ahead_behind](yellow) "
+
+[python]
+format = "[($virtualenv)](purple) "

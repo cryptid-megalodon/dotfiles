@@ -1,0 +1,5 @@
+{
+  "tui": "fullscreen",
+  "agentPushNotifEnabled": true,
+  "inputNeededNotifEnabled": true
+}

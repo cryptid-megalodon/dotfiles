@@ -1,0 +1,14 @@
+#!/bin/sh
+# Reruns whenever the extension list in packages.yaml changes.
+# extensions hash: {{ .packages.vscode_extensions | toJson | sha256sum }}
+set -eu
+
+if ! command -v code >/dev/null 2>&1; then
+    echo "==> 'code' not on PATH, skipping VS Code extensions"
+    exit 0
+fi
+
+installed=$(code --list-extensions | tr '[:upper:]' '[:lower:]')
+{{ range .packages.vscode_extensions -}}
+echo "$installed" | grep -qx "{{ . | lower }}" || code --install-extension {{ . }}
+{{ end -}}
