@@ -1,0 +1,20 @@
+#!/bin/sh
+# Points GNOME's built-in Ctrl+Alt+T "Launch Terminal" shortcut at ghostty
+# instead of the distro default (gnome-terminal). Reruns if this script changes.
+set -eu
+
+{{ if eq .chezmoi.os "linux" -}}
+if ! command -v gsettings >/dev/null 2>&1 || ! gsettings list-schemas | grep -qx org.gnome.desktop.default-applications.terminal; then
+    echo "==> Not on GNOME (or gsettings unavailable), skipping terminal shortcut"
+    exit 0
+fi
+
+if ! command -v ghostty >/dev/null 2>&1; then
+    echo "==> ghostty not installed, skipping terminal shortcut"
+    exit 0
+fi
+
+gsettings set org.gnome.desktop.default-applications.terminal exec ghostty
+gsettings set org.gnome.desktop.default-applications.terminal exec-arg '-e'
+echo "==> Set GNOME default terminal (Ctrl+Alt+T) to ghostty"
+{{ end -}}
