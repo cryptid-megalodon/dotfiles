@@ -26,6 +26,14 @@ This is a [chezmoi](https://www.chezmoi.io/) source directory. Files here are
   template functions (gated on `.bitwarden`) or `~/.zshrc.local`.
 - **Don't run `chezmoi apply` on the user's machine** unless asked; it runs
   install scripts with `sudo`. Use `chezmoi diff` or a dry run instead.
+- **Pushing from a work machine needs an account switch.** There `gh` is
+  active as the work account (`blake-wolf`), which can't push this repo, and
+  `gh` serves Git only the active account's token. Push with
+  `gh auth switch -u cryptid-megalodon && git push; gh auth switch -u blake-wolf`
+  so the work account is active again afterward. The repo must authenticate
+  through `gh` rather than the keychain; that is per-clone `.git/config`, set
+  once with
+  `git config credential.helper '' && git config --add credential.helper '!gh auth git-credential'`.
 
 ## Verifying changes
 
