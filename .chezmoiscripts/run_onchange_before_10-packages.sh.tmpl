@@ -13,6 +13,11 @@ brew {{ . | quote }}
 {{ range .packages.brew.casks -}}
 cask {{ . | quote }}
 {{ end -}}
+{{ if eq .machine "personal" -}}
+{{ range .packages.brew.casks_personal -}}
+cask {{ . | quote }}
+{{ end -}}
+{{ end -}}
 BREWFILE
 {{ else if eq .chezmoi.os "linux" -}}
 {{ range .packages.apt_repos -}}

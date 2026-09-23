@@ -19,6 +19,8 @@ packages:
     casks:
       - ghostty
       - visual-studio-code
+    # Personal machines only; on work machines these apps are managed outside brew.
+    casks_personal:
       - firefox
       - bitwarden
 
