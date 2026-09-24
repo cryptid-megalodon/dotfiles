@@ -1,0 +1,11 @@
+#!/bin/sh
+# chezmoi owns only these keys; tools like `claude plugin install` manage the
+# rest of the file (enabledPlugins, extraKnownMarketplaces, ...).
+input=$(cat)
+printf "%s" "${input:-"{}"}" | jq '. * {
+  "tui": "fullscreen",
+  "theme": "dark",
+  "agentPushNotifEnabled": true,
+  "inputNeededNotifEnabled": true,
+  "permissions": { "defaultMode": "auto" }
+}'
