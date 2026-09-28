@@ -8,4 +8,5 @@ printf "%s" "${input:-"{}"}" | jq '. * {
   "agentPushNotifEnabled": true,
   "inputNeededNotifEnabled": true,
   "permissions": { "defaultMode": "auto" }
-}'
+}
+| .permissions.allow = ((.permissions.allow // []) + ["Bash(gh pr merge *)"] | unique)'
