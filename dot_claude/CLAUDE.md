@@ -17,3 +17,9 @@ These apply to every project unless a project-level CLAUDE.md overrides them.
   (https://github.com/cryptid-megalodon/dotfiles). Edit managed files with
   `chezmoi edit <path>`, not by editing `~/...` directly.
 - Machines are macOS or Debian/Ubuntu. Don't assume GNU coreutils flags on mac.
+
+## Jira
+- Every Jira ticket I create gets the label `ai-quality-team`. `jira create`
+  has no label flag, so right after creating, run
+  `jira update <KEY> --fields '{"labels":["ai-quality-team"]}'`. This applies
+  alongside the create-ticket skill's no-work-type-label rule.
