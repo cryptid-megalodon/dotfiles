@@ -42,6 +42,11 @@ a tip equal to the PR's merged head means everything on it landed.
 For each verified branch it runs `git worktree remove` (never `--force`), then
 `git branch -D`, then `git fetch --prune origin` once per clone it touched.
 
+It also checks each clone's `<repo>-worktrees/` for a directory named after the ticket that
+git no longer tracks as a worktree, typically empty `target/` build directories left after a
+worktree was removed some other way. If it holds only empty directories, it's removed with
+`find -type d -empty -delete`, which cannot delete a file. If it holds any file, it's a `SKIP`.
+
 ## Skips and what to tell the user
 
 | SKIP reason | Meaning | User's options |
@@ -50,8 +55,9 @@ For each verified branch it runs `git worktree remove` (never `--force`), then
 | uncommitted or untracked changes | The worktree has work that would be lost | Commit/push it, or discard it, then rerun |
 | checked out in the main checkout | Can't delete the branch the main checkout is on | `git switch <default>` in the main checkout, then rerun |
 | detached worktree | Worktree named after the ticket with no branch | Inspect it; remove by hand if it's stale |
+| not a git worktree but holds N file(s) | Leftover directory with real content, possibly unrecovered work | Inspect it; remove by hand only if nothing in it is needed |
 
-Never pass `--force` to `git worktree remove`, delete a skipped branch, or remove the remote
+Never pass `--force` to `git worktree remove`, delete a skipped branch or directory, or remove the remote
 branch on GitHub (GitHub deletes merged PR branches) without the user asking for that specific
 thing.
 

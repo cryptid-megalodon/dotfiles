@@ -17,10 +17,16 @@
 #   - it isn't checked out in the clone's main checkout
 # Anything else is reported as SKIP with the reason, and left alone.
 #
+# It also finds leftover directories named after the ticket in each clone's
+# <repo>-worktrees/ that git no longer tracks as worktrees (e.g. build output left after a
+# worktree was removed). One holding only empty directories is removed; one holding any file
+# is reported as SKIP and never deleted.
+#
 # Without --apply this is a dry run and changes nothing. With --apply, for each verified
 # branch: `git worktree remove` (never --force), then `git branch -D`, then one
 # `git fetch --prune origin` per affected clone to drop remote-tracking refs for branches
-# GitHub already deleted.
+# GitHub already deleted; then empty leftover directories are removed with
+# `find -type d -empty -delete`, which cannot delete a file.
 #
 # Exit codes:
 #   0  dry run finished, or everything planned was applied
@@ -37,7 +43,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --apply) apply=true; shift ;;
     --root)  [[ $# -ge 2 ]] || usage; roots+=("$2"); shift 2 ;;
-    -h|--help) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*) usage ;;
     *) [[ -z "$ticket" ]] || usage; ticket="$1"; shift ;;
   esac
@@ -61,6 +67,39 @@ gh_slug() {
 }
 
 found=0 skipped=0
+
+# Prints the clone header once, before its first result line.
+header() { $header_done || { echo "$clone (${slug:-no GitHub remote})"; header_done=true; }; }
+
+# Directories named after the ticket in <repo>-worktrees/ that git no longer tracks.
+sweep_leftovers() {
+  local wt_parent registered d real nfiles
+  wt_parent="$(dirname "$clone")/$(basename "$clone")-worktrees"
+  [[ -d "$wt_parent" ]] || return 0
+  registered=$(git -C "$clone" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p' |
+    while IFS= read -r p; do if [[ -d "$p" ]]; then (cd "$p" && pwd -P); else echo "$p"; fi; done)
+  for d in "$wt_parent"/*/; do
+    [[ -d "$d" ]] || continue
+    d=${d%/}
+    matches_ticket "$(basename "$d")" || continue
+    real=$(cd "$d" && pwd -P)
+    printf '%s\n' "$registered" | grep -qxF "$real" && continue
+    found=$((found + 1)); header
+    nfiles=$(find "$d" \( -type f -o -type l \) 2>/dev/null | wc -l | tr -d ' ')
+    if [[ "$nfiles" -gt 0 ]]; then
+      echo "  SKIP     $d — not a git worktree but holds $nfiles file(s); inspect it and remove by hand"
+      skipped=$((skipped + 1)); continue
+    fi
+    if ! $apply; then
+      echo "  WOULD    remove leftover directory $d (not a git worktree; only empty directories)"
+    elif find "$d" -depth -type d -empty -delete 2>/dev/null && [[ ! -e "$d" ]]; then
+      echo "  REMOVED  leftover directory $d"
+    else
+      echo "  FAIL     couldn't remove leftover directory $d"
+      skipped=$((skipped + 1))
+    fi
+  done
+}
 $apply && mode="APPLY" || mode="DRY RUN (pass --apply to clean up)"
 echo "finish-ticket $ticket — $mode"
 
@@ -91,18 +130,19 @@ for clone in "${clones[@]}"; do
   )
   branches=$(printf '%s\n' "$branches" | sed '/^$/d' | sort -u)
 
-  # Detached worktrees named after the ticket have no branch to verify against a PR.
-  printf '%s\n' "$worktrees" | tail -n +2 | while IFS=$'\t' read -r p b; do
-    [[ -z "$b" ]] && matches_ticket "$(basename "$p")" &&
-      echo "  SKIP     $p — detached worktree; no branch to check against a merged PR"
-  done | grep . && { skipped=$((skipped + 1)); found=$((found + 1)); }
-
-  [[ -n "$branches" ]] || continue
   slug=$(gh_slug "$clone")
-  echo "$clone ($slug)"
+  header_done=false
   touched=false
 
-  while IFS= read -r branch; do
+  # Detached worktrees named after the ticket have no branch to verify against a PR.
+  while IFS=$'\t' read -r p b; do
+    [[ -n "$p" && -z "$b" ]] && matches_ticket "$(basename "$p")" || continue
+    found=$((found + 1)); skipped=$((skipped + 1)); header
+    echo "  SKIP     $p — detached worktree; no branch to check against a merged PR"
+  done < <(printf '%s\n' "$worktrees" | tail -n +2)
+
+  [[ -n "$branches" ]] && while IFS= read -r branch; do
+    header
     found=$((found + 1))
     wt=$(printf '%s\n' "$worktrees" | awk -F'\t' -v b="$branch" '$2 == b { print $1; exit }')
     wt_note=${wt:+ [worktree $wt left in place]}
@@ -163,6 +203,8 @@ for clone in "${clones[@]}"; do
       skipped=$((skipped + 1))
     fi
   done <<< "$branches"
+
+  sweep_leftovers
 
   if $apply && $touched; then
     git -C "$clone" fetch --prune --quiet origin 2>/dev/null &&
