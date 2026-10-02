@@ -67,6 +67,11 @@ fi
 # AWS: default to the read-only SSO profile; opt into others with --profile.
 export AWS_PROFILE=readonly-prod
 
+# WHOOP dev API token for local services and IDE run configs. Cached only, so a new
+# shell never opens a browser; empty once it expires (12h) until
+# `whoop auth token --dev` refreshes it.
+command -v whoop >/dev/null && export WHOOP_API_KEY=$(whoop auth token --dev --no-fetch 2>/dev/null)
+
 {{ end -}}
 
 # Local, machine-specific overrides that don't belong in the repo.
