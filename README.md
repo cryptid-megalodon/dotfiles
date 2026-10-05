@@ -46,6 +46,31 @@ Machine-specific shell bits that shouldn't be in the repo go in `~/.zshrc.local`
 | `dot_claude/` | Global Claude Code instructions and settings |
 | `AGENTS.md` | How coding agents should work in this repo |
 
+## tmux keybindings
+
+The prefix is `C-b` or `C-Space`. `prefix ?` lists every binding; the custom
+ones below have notes there too. The `-N` listing shows `C-b` in front of
+every key, including the no-prefix ones (their notes say so).
+
+| Keys | Action |
+| --- | --- |
+| `C-h` / `C-j` / `C-k` / `C-l` | Move to the pane or nvim split left/down/up/right (no prefix; pairs with vim-tmux-navigator in nvim) |
+| `prefix h` / `j` / `k` / `l` | Move to the pane left/down/up/right |
+| `prefix \|` or `\` or `%` | Split side by side, in the current dir |
+| `prefix -` or `_` or `"` | Split top/bottom, in the current dir |
+| `prefix c` | New window, in the current dir |
+| `prefix H` / `J` / `K` / `L` | Resize by 5; keep tapping to repeat |
+| `prefix =` | Balance the current pane and its neighbors |
+| `prefix Alt-1`…`Alt-5` | Preset layouts (even-horizontal, even-vertical, main-h, main-v, tiled); needs `macos-option-as-alt` in Ghostty |
+| `prefix C-l` | Clear the screen (plain `C-l` now moves panes) |
+| `prefix C-k` | Kill to end of line (plain `C-k` now moves panes) |
+| `prefix R` | Reload `~/.tmux.conf` |
+| `prefix [` | Copy mode: `v` starts a selection, `y` copies to the system clipboard and exits |
+| `prefix p` | Paste the most recent buffer |
+
+Also on: mouse (click to focus, drag borders, scroll), windows and panes
+numbered from 1, renumbering when a window closes, and 50k lines of history.
+
 ## Conventions
 
 - `dot_` prefix ⇒ leading `.` in `$HOME`; `.tmpl` suffix ⇒ Go template with

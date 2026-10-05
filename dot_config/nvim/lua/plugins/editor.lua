@@ -21,4 +21,15 @@ return {
       { "<leader>b", "<cmd>Telescope buffers<CR>", desc = "Buffers" },
     },
   },
+  -- C-h/j/k/l moves across nvim splits and tmux panes (see ~/.tmux.conf).
+  {
+    "christoomey/vim-tmux-navigator",
+    cmd = { "TmuxNavigateLeft", "TmuxNavigateDown", "TmuxNavigateUp", "TmuxNavigateRight" },
+    keys = {
+      { "<C-h>", "<cmd>TmuxNavigateLeft<CR>", desc = "Window/pane left" },
+      { "<C-j>", "<cmd>TmuxNavigateDown<CR>", desc = "Window/pane down" },
+      { "<C-k>", "<cmd>TmuxNavigateUp<CR>", desc = "Window/pane up" },
+      { "<C-l>", "<cmd>TmuxNavigateRight<CR>", desc = "Window/pane right" },
+    },
+  },
 }
