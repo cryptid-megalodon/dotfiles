@@ -59,9 +59,10 @@ every key, including the no-prefix ones (their notes say so).
 | `prefix \|` or `\` or `%` | Split side by side, in the current dir |
 | `prefix -` or `_` or `"` | Split top/bottom, in the current dir |
 | `prefix c` | New window, in the current dir |
+| `Alt-h` / `Alt-j` / `Alt-k` / `Alt-l` | Resize by 5 (no prefix; Ghostty sends Option as Alt on macOS) |
 | `prefix H` / `J` / `K` / `L` | Resize by 5; keep tapping to repeat |
 | `prefix =` | Balance the current pane and its neighbors |
-| `prefix Alt-1`…`Alt-5` | Preset layouts (even-horizontal, even-vertical, main-h, main-v, tiled); needs `macos-option-as-alt` in Ghostty |
+| `prefix Alt-1`…`Alt-5` | Preset layouts (even-horizontal, even-vertical, main-h, main-v, tiled); Option works as Alt in Ghostty |
 | `prefix C-l` | Clear the screen (plain `C-l` now moves panes) |
 | `prefix C-k` | Kill to end of line (plain `C-k` now moves panes) |
 | `prefix R` | Reload `~/.tmux.conf` |

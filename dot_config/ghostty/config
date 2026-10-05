@@ -7,3 +7,5 @@ cursor-style = block
 shell-integration = zsh
 copy-on-select = clipboard
 confirm-close-surface = false
+# Send Option as Alt (macOS only) so tmux M- bindings work.
+macos-option-as-alt = true
