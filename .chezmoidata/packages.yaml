@@ -8,6 +8,7 @@ packages:
       - zsh
       - tmux
       - neovim
+      - tree-sitter-cli   # nvim-treesitter builds parsers with it
       - starship
       - ripgrep
       - fd
