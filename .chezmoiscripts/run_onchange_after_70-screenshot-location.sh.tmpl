@@ -1,0 +1,15 @@
+#!/bin/sh
+# Saves macOS screenshots to ~/Pictures/Screenshots instead of the Desktop.
+# Reruns if this script changes.
+set -eu
+
+{{ if eq .chezmoi.os "darwin" -}}
+dir="$HOME/Pictures/Screenshots"
+mkdir -p "$dir"
+
+if [ "$(defaults read com.apple.screencapture location 2>/dev/null || true)" != "$dir" ]; then
+    defaults write com.apple.screencapture location "$dir"
+    killall SystemUIServer 2>/dev/null || true
+fi
+echo "==> Set screenshot location to $dir"
+{{ end -}}
