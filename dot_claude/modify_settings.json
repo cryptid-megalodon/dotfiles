@@ -9,4 +9,15 @@ printf "%s" "${input:-"{}"}" | jq '. * {
   "inputNeededNotifEnabled": true,
   "permissions": { "defaultMode": "auto" }
 }
-| .permissions.allow = ((.permissions.allow // []) + ["Bash(gh pr merge *)"] | unique)'
+| .permissions.allow = ((.permissions.allow // []) + ["Bash(gh pr merge *)"] | unique)
+| .hooks.PreToolUse = ([(.hooks.PreToolUse // [])[]
+    | select(any(.hooks[]?; .command == "~/.claude/hooks/pup-write-gate.py") | not)]
+  + [{
+    "matcher": "Bash",
+    "hooks": [{
+      "type": "command",
+      "command": "~/.claude/hooks/pup-write-gate.py",
+      "timeout": 30,
+      "statusMessage": "Checking for Datadog writes..."
+    }]
+  }])'
