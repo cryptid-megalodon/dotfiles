@@ -17,6 +17,10 @@ These apply to every project unless a project-level CLAUDE.md overrides them.
   (https://github.com/cryptid-megalodon/dotfiles). Edit managed files with
   `chezmoi edit <path>`, not by editing `~/...` directly.
 - Machines are macOS or Debian/Ubuntu. Don't assume GNU coreutils flags on mac.
+- Write every time you show me in the machine's local timezone (check with
+  `date +%Z`), never UTC, and label the zone (e.g. `2:30 PM EDT`). Convert
+  UTC timestamps from logs, APIs, CI, and git before quoting them. Leave
+  UTC alone only inside code, configs, or data where the format is required.
 
 ## Jira
 - Every Jira ticket I create gets the label `ai-quality-team`. `jira create`
