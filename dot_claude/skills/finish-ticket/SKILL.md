@@ -1,14 +1,15 @@
 ---
 name: finish-ticket
-description: Clean up after a ticket's PRs merge — remove its git worktrees, delete its local branches, and prune stale remote-tracking refs, across every repo under ~/repos. Use when the user says "finish ticket", "clean up BOT-123", "the PR merged, clean up", "remove the worktree", "delete the local branch", or otherwise wants post-merge cleanup for a ticket.
+description: Clean up after a ticket's PRs merge — remove its git worktrees, delete its local branches, and prune stale remote-tracking refs across every repo under ~/repos, then post the ticket's status to Jira and ask whether to mark it Done. Use when the user says "finish ticket", "clean up BOT-123", "the PR merged, clean up", "remove the worktree", "delete the local branch", or otherwise wants post-merge cleanup for a ticket.
 allowed-tools: Bash
 ---
 
 # Finish Ticket
 
 Post-merge cleanup for the one-worktree-per-ticket layout in `~/repos/CLAUDE.md`
-(`~/repos/<repo>-worktrees/<TICKET>`, branch `<TICKET>-<desc>`). The script does the work;
-it verifies before it deletes anything, and never forces.
+(`~/repos/<repo>-worktrees/<TICKET>`, branch `<TICKET>-<desc>`), then a Jira wrap-up: the
+ticket gets a comment on where the work stands, and the user decides whether it's Done. The script does the local work; it verifies before it deletes anything, and never
+forces.
 
 ```bash
 ~/.claude/skills/finish-ticket/finish-ticket.sh <TICKET>            # dry run: show the plan
@@ -17,6 +18,14 @@ it verifies before it deletes anything, and never forces.
 
 `--root DIR` (repeatable) searches somewhere other than `~/repos`. The default root already
 covers clones nested deeper, such as `~/repos/feedback_loop/jc-os-poc/repos/<repo>`.
+
+```bash
+~/.claude/skills/finish-ticket/ticket-prs.sh <TICKET>    # JSON list of the ticket's PRs, org-wide
+```
+
+`ticket-prs.sh` keeps a PR only when its title carries the key as a whole token or its body
+links the ticket, so it works after the branches are gone and never matches `BOT-12` to
+`BOT-123`. `--owner ORG` searches an org other than `WhoopInc`.
 
 ## Steps
 
@@ -30,6 +39,24 @@ covers clones nested deeper, such as `~/repos/feedback_loop/jc-os-poc/repos/<rep
    branches).
 4. **Report** what was removed and deleted, and every `SKIP`/`FAIL` with its reason and the
    fix the user can choose (below). Don't act on a skip yourself.
+5. **Collect the ticket's PRs** with `ticket-prs.sh`. Add any PR the cleanup script named in a
+   `DELETED` or `SKIP` line that the search missed (a PR whose title lacks the key). They
+   decide the status and the Done recommendation; they don't go in the comment, because Jira's
+   GitHub integration already shows them on the ticket.
+6. **Post a status comment** on the ticket. First read `jira get <TICKET>` and
+   `jira comments <TICKET>`: if an earlier wrap-up comment already reports the same status,
+   don't post another. Otherwise post one with `jira comment <TICKET>`:
+   - Start it with `<claude>`, since it posts under the user's name.
+   - In 1–3 sentences, say where the work stands: what landed, what's still open, and any
+     follow-up you actually know from the PR descriptions or the session (a deploy order, a
+     stacked PR). Don't guess at deploy state or anything else you haven't seen.
+   - Write any time in the machine's local zone, labeled (`2:30 PM EDT`).
+
+   Then read it back with `jira comments <TICKET>`. If the `<claude>` prefix didn't survive
+   the markdown conversion, tell the user; don't post a second copy.
+7. **Ask whether to mark it Done**, with AskUserQuestion, unless the ticket is already Done.
+   Recommend Done only when no PR is still open; if one is, recommend leaving it and name the
+   open PRs. Run `jira transition <TICKET> "Done"` only on a yes.
 
 ## What the script checks
 
