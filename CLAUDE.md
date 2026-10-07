@@ -20,7 +20,7 @@ This is a [chezmoi](https://www.chezmoi.io/) source directory. Files here are
 - **Shared content lives in `.chezmoitemplates/`** and is rendered with
   `{{ template "name" . }}`. VS Code settings work this way (two OS paths, one
   source). Don't duplicate.
-- **Repo-only files** (`README.md`, `AGENTS.md`, …) must be listed in
+- **Repo-only files** (`README.md`, `CLAUDE.md`, …) must be listed in
   `.chezmoiignore` or chezmoi will copy them into `$HOME`.
 - **No secrets in the repo.** Use chezmoi's `bitwarden`/`bitwardenFields`
   template functions (gated on `.bitwarden`) or `~/.zshrc.local`.
@@ -34,6 +34,10 @@ This is a [chezmoi](https://www.chezmoi.io/) source directory. Files here are
   through `gh` rather than the keychain; that is per-clone `.git/config`, set
   once with
   `git config credential.helper '' && git config --add credential.helper '!gh auth git-credential'`.
+- **Commit as the personal account.** The global git email is the work
+  address, so each clone overrides it in `.git/config`, set once with
+  `git config user.email 102880526+cryptid-megalodon@users.noreply.github.com`.
+  Check `git config user.email` before committing.
 
 ## Verifying changes
 

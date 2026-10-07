@@ -44,7 +44,7 @@ Machine-specific shell bits that shouldn't be in the repo go in `~/.zshrc.local`
 | `dot_config/` | ghostty, starship, nvim, opencode, VS Code (Linux path) |
 | `Library/Application Support/Code/User/` | VS Code (mac path) |
 | `dot_claude/` | Global Claude Code instructions and settings |
-| `AGENTS.md` | How coding agents should work in this repo |
+| `CLAUDE.md` | How coding agents should work in this repo |
 
 ## tmux keybindings
 

@@ -1,6 +1,6 @@
 # Repo-only files; never copied into $HOME.
 README.md
-AGENTS.md
+CLAUDE.md
 LICENSE
 
 {{ if ne .chezmoi.os "darwin" }}
