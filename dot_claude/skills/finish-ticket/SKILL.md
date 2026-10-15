@@ -57,6 +57,13 @@ links the ticket, so it works after the branches are gone and never matches `BOT
 7. **Ask whether to mark it Done**, with AskUserQuestion, unless the ticket is already Done.
    Recommend Done only when no PR is still open; if one is, recommend leaving it and name the
    open PRs. Run `jira transition <TICKET> "Done"` only on a yes.
+   Also check the assignee: compare the `assignee` from `jira get <TICKET>` with the
+   `displayName` from `jira whoami`. If the ticket is unassigned or assigned to someone else,
+   ask in the same AskUserQuestion call, as a second question, whether to assign it to the
+   user, naming the current assignee. On a yes, run
+   `jira update <TICKET> --fields '{"assignee":{"accountId":"<accountId from jira whoami>"}}' < /dev/null`
+   and confirm with `jira get <TICKET>`. Ask this even when the ticket is already Done.
+
 
 ## What the script checks
 
