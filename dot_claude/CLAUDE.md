@@ -18,7 +18,10 @@ These apply to every project unless a project-level CLAUDE.md overrides them.
 - Shell: zsh. Editor: nvim. Terminal: ghostty. Prompt: starship.
 - Dotfiles are managed with chezmoi from `~/.local/share/chezmoi`
   (https://github.com/cryptid-megalodon/dotfiles). Edit managed files with
-  `chezmoi edit <path>`, not by editing `~/...` directly.
+  `chezmoi edit <path>`, not by editing `~/...` directly. Before committing or
+  pushing there, read `~/.local/share/chezmoi/CLAUDE.md`: that repo commits
+  and pushes as my personal GitHub account (`cryptid-megalodon`), not the
+  work one.
 - Machines are macOS or Debian/Ubuntu. Don't assume GNU coreutils flags on mac.
 - Write every time you show me in the machine's local timezone (check with
   `date +%Z`), never UTC, and label the zone (e.g. `2:30 PM EDT`). Convert
