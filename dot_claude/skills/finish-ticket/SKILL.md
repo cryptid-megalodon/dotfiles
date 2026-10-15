@@ -46,13 +46,13 @@ links the ticket, so it works after the branches are gone and never matches `BOT
 6. **Post a status comment** on the ticket. First read `jira get <TICKET>` and
    `jira comments <TICKET>`: if an earlier wrap-up comment already reports the same status,
    don't post another. Otherwise post one with `jira comment <TICKET>`:
-   - Start it with `<claude>`, since it posts under the user's name.
+   - Start it with `[claude:]`, since it posts under the user's name.
    - In 1–3 sentences, say where the work stands: what landed, what's still open, and any
      follow-up you actually know from the PR descriptions or the session (a deploy order, a
      stacked PR). Don't guess at deploy state or anything else you haven't seen.
    - Write any time in the machine's local zone, labeled (`2:30 PM EDT`).
 
-   Then read it back with `jira comments <TICKET>`. If the `<claude>` prefix didn't survive
+   Then read it back with `jira comments <TICKET>`. If the `[claude:]` prefix didn't survive
    the markdown conversion, tell the user; don't post a second copy.
 7. **Ask whether to mark it Done**, with AskUserQuestion, unless the ticket is already Done.
    Recommend Done only when no PR is still open; if one is, recommend leaving it and name the

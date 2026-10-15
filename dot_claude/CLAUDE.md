@@ -10,6 +10,9 @@ These apply to every project unless a project-level CLAUDE.md overrides them.
   descriptions. No `Co-Authored-By`, `Generated with`, or session links.
 - Match the surrounding code's style, naming, and comment density.
 - When something fails (tests, builds, commands), report the actual output.
+- Start every comment or reply you post under my name (PR review replies,
+  issue comments, Jira comments) with `[claude:]`, so readers can tell it
+  came from Claude and not from me.
 
 ## Environment
 - Shell: zsh. Editor: nvim. Terminal: ghostty. Prompt: starship.
