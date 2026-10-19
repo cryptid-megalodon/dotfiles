@@ -1,13 +1,13 @@
 ---
 name: finish-ticket
-description: Clean up after a ticket's PRs merge — remove its git worktrees, delete its local branches, and prune stale remote-tracking refs across every repo under ~/repos, then post the ticket's status to Jira and ask whether to mark it Done. Use when the user says "finish ticket", "clean up BOT-123", "the PR merged, clean up", "remove the worktree", "delete the local branch", or otherwise wants post-merge cleanup for a ticket.
+description: Clean up after a ticket's PRs merge — remove its git worktrees, delete its local branches, and prune stale remote-tracking refs across every repo under ~/wolf-os-poc/repos, then post the ticket's status to Jira and ask whether to mark it Done. Use when the user says "finish ticket", "clean up BOT-123", "the PR merged, clean up", "remove the worktree", "delete the local branch", or otherwise wants post-merge cleanup for a ticket.
 allowed-tools: Bash
 ---
 
 # Finish Ticket
 
-Post-merge cleanup for the one-worktree-per-ticket layout in `~/repos/CLAUDE.md`
-(`~/repos/<repo>-worktrees/<TICKET>`, branch `<TICKET>-<desc>`), then a Jira wrap-up: the
+Post-merge cleanup for the one-worktree-per-ticket layout in `~/wolf-os-poc/CLAUDE.md`
+(`~/wolf-os-poc/repos/<repo>-worktrees/<TICKET>`, branch `<TICKET>-<desc>`), then a Jira wrap-up: the
 ticket gets a comment on where the work stands, and the user decides whether it's Done. The script does the local work; it verifies before it deletes anything, and never
 forces.
 
@@ -16,8 +16,7 @@ forces.
 ~/.claude/skills/finish-ticket/finish-ticket.sh <TICKET> --apply    # do it
 ```
 
-`--root DIR` (repeatable) searches somewhere other than `~/repos`. The default root already
-covers clones nested deeper, such as `~/repos/feedback_loop/jc-os-poc/repos/<repo>`.
+`--root DIR` (repeatable) searches somewhere other than `~/wolf-os-poc/repos`.
 
 ```bash
 ~/.claude/skills/finish-ticket/ticket-prs.sh <TICKET>    # JSON list of the ticket's PRs, org-wide
@@ -57,6 +56,7 @@ links the ticket, so it works after the branches are gone and never matches `BOT
 7. **Ask whether to mark it Done**, with AskUserQuestion, unless the ticket is already Done.
    Recommend Done only when no PR is still open; if one is, recommend leaving it and name the
    open PRs. Run `jira transition <TICKET> "Done"` only on a yes.
+
    Also check the assignee: compare the `assignee` from `jira get <TICKET>` with the
    `displayName` from `jira whoami`. If the ticket is unassigned or assigned to someone else,
    ask in the same AskUserQuestion call, as a second question, whether to assign it to the
@@ -64,6 +64,17 @@ links the ticket, so it works after the branches are gone and never matches `BOT
    `jira update <TICKET> --fields '{"assignee":{"accountId":"<accountId from jira whoami>"}}' < /dev/null`
    and confirm with `jira get <TICKET>`. Ask this even when the ticket is already Done.
 
+   **Sprint.** Read `sprint` from `jira get <TICKET>`. The ticket should be in one of the sprints
+   on the [AI Quality board](https://whoopinc.atlassian.net/jira/software/c/projects/BOT/boards/9143),
+   named `AIQ - <Mon> <Year>` (e.g. `AIQ - Oct 2026`); `AIP - Sprint N` sprints belong to a
+   different board. If `sprint` is empty or isn't an `AIQ - ` sprint, tell the user and name the
+   sprint it's in (if any), then ask which AIQ sprint to move it to. Set it with
+   `jira update <TICKET> --fields '{"customfield_10006": <sprintId>}' < /dev/null` (WHOOP's sprint
+   field is `customfield_10006`; `customfield_10020` is rejected) and confirm with `jira get`.
+   The CLI needs the numeric sprint ID and can't look one up for this board (`jira sprints` lists
+   only the AIP board), so take it from the board's URL (`?sprint=<id>`, the sprint shown there)
+   or ask the user for it. If it's already in an `AIQ - ` sprint, say which and move on.
+   Check this even when the ticket is already Done.
 
 ## What the script checks
 

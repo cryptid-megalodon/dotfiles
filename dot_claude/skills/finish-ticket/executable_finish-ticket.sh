@@ -4,7 +4,7 @@
 #
 # Usage: finish-ticket.sh <TICKET> [--apply] [--root DIR]...
 #
-# Finds every git clone under the roots (default: ~/repos), then every local branch and
+# Finds every git clone under the roots (default: ~/wolf-os-poc/repos), then every local branch and
 # worktree belonging to the ticket: branches containing the ticket key as a token
 # (BOT-123-foo, feat-user-bot-123-foo) and worktrees on those branches or at a path named
 # after the ticket. Case-insensitive.
@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ "$ticket" =~ ^[A-Za-z][A-Za-z0-9]*-[0-9]+$ ]] || { echo "Ticket must look like BOT-123, got '$ticket'" >&2; exit 1; }
-[[ ${#roots[@]} -gt 0 ]] || roots=("$HOME/repos")
+[[ ${#roots[@]} -gt 0 ]] || roots=("$HOME/wolf-os-poc/repos")
 for tool in git gh jq; do
   command -v "$tool" >/dev/null || { echo "$tool is required" >&2; exit 1; }
 done
