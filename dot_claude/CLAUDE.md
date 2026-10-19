@@ -28,6 +28,19 @@ These apply to every project unless a project-level CLAUDE.md overrides them.
   UTC timestamps from logs, APIs, CI, and git before quoting them. Leave
   UTC alone only inside code, configs, or data where the format is required.
 
+## Datadog
+- Use the `datadog:datadog` skill (WHOOP marketplace) for everything in
+  Datadog; it carries the CLI invocation and read-only wrapper. Don't run bare
+  `pup`, and don't use a Datadog MCP server or raw HTTP (`curl`, scripts) to
+  Datadog APIs.
+- If a request needs a Datadog write (or anything else the skill can't do),
+  don't work around it. Tell me to restart with `claude-pup` (a shell function
+  that sets `PUP_WRITE_SESSION=1` and disables the datadog plugin), and offer to
+  resume the task there.
+- Only when `PUP_WRITE_SESSION=1` is set may you run bare `pup`. Even then:
+  run reads before writes, show me the exact write command before running it,
+  and never print or extract the auth token or hit Datadog APIs with raw HTTP.
+
 ## Jira
 - Every Jira ticket I create gets the label `ai-quality-team`. `jira create`
   has no label flag, so right after creating, run

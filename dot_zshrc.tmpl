@@ -55,6 +55,14 @@ datets() {
 {{ end -}}
 }
 
+# Claude session that may run bare `pup` (Datadog writes). Disables the datadog
+# plugin (its guard hook and read-only skill) and sets PUP_WRITE_SESSION, which
+# the global CLAUDE.md keys on.
+claude-pup() {
+  PUP_WRITE_SESSION=1 claude \
+    --settings '{"enabledPlugins":{"datadog@whoop-marketplace":false}}' "$@"
+}
+
 # --- Tools --------------------------------------------------------------------
 command -v fzf >/dev/null && eval "$(fzf --zsh 2>/dev/null)"
 
@@ -77,5 +85,12 @@ command -v whoop >/dev/null && export WHOOP_API_KEY=$(whoop auth token --dev --n
 # Local, machine-specific overrides that don't belong in the repo.
 [ -f "$HOME/.zshrc.local" ] && . "$HOME/.zshrc.local"
 
+{{ if eq .chezmoi.os "darwin" -}}
+# Docker Desktop CLI completions.
+fpath=($HOME/.docker/completions $fpath)
+autoload -Uz compinit
+(( ${+_comps[docker]} )) || compinit
+
+{{ end -}}
 # --- Prompt (keep last) -------------------------------------------------------
 command -v starship >/dev/null && eval "$(starship init zsh)"

@@ -10,14 +10,7 @@ printf "%s" "${input:-"{}"}" | jq '. * {
   "permissions": { "defaultMode": "auto" }
 }
 | .permissions.allow = ((.permissions.allow // []) + ["Bash(gh pr merge *)"] | unique)
-| .hooks.PreToolUse = ([(.hooks.PreToolUse // [])[]
-    | select(any(.hooks[]?; .command == "~/.claude/hooks/pup-write-gate.py") | not)]
-  + [{
-    "matcher": "Bash",
-    "hooks": [{
-      "type": "command",
-      "command": "~/.claude/hooks/pup-write-gate.py",
-      "timeout": 30,
-      "statusMessage": "Checking for Datadog writes..."
-    }]
-  }])'
+| .hooks.PreToolUse = [(.hooks.PreToolUse // [])[]
+    | select(any(.hooks[]?; (.command // "") | contains("pup-write-gate")) | not)]
+| if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end
+| if .hooks == {} then del(.hooks) else . end'
