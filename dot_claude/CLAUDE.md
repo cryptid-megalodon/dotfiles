@@ -46,3 +46,8 @@ These apply to every project unless a project-level CLAUDE.md overrides them.
   has no label flag, so right after creating, run
   `jira update <KEY> --fields '{"labels":["ai-quality-team"]}'`. This applies
   alongside the create-ticket skill's no-work-type-label rule.
+- Every Jira ticket I create also goes in the AI Quality board's active
+  sprint. Right after creating it, run `jira sprints --project BOT`, take the
+  entry with `"boardId": 9143` and `"state": "active"`, and run
+  `jira sprint-add <id> <KEY> --project BOT`. If there isn't exactly one such
+  sprint, ask me which to use instead of picking one.
