@@ -67,14 +67,13 @@ links the ticket, so it works after the branches are gone and never matches `BOT
    **Sprint.** Read `sprint` from `jira get <TICKET>`. The ticket should be in one of the sprints
    on the [AI Quality board](https://whoopinc.atlassian.net/jira/software/c/projects/BOT/boards/9143),
    named `AIQ - <Mon> <Year>` (e.g. `AIQ - Oct 2026`); `AIP - Sprint N` sprints belong to a
-   different board. If `sprint` is empty or isn't an `AIQ - ` sprint, tell the user and name the
-   sprint it's in (if any), then ask which AIQ sprint to move it to. Set it with
-   `jira update <TICKET> --fields '{"customfield_10006": <sprintId>}' < /dev/null` (WHOOP's sprint
-   field is `customfield_10006`; `customfield_10020` is rejected) and confirm with `jira get`.
-   The CLI needs the numeric sprint ID and can't look one up for this board (`jira sprints` lists
-   only the AIP board), so take it from the board's URL (`?sprint=<id>`, the sprint shown there)
-   or ask the user for it. If it's already in an `AIQ - ` sprint, say which and move on.
-   Check this even when the ticket is already Done.
+   different board. If it's already in an `AIQ - ` sprint, say which and move on. If `sprint` is
+   empty or isn't an `AIQ - ` sprint, tell the user and name the sprint it's in (if any), then
+   ask which AIQ sprint to move it to. Take the choices from `jira sprints --project BOT`,
+   keeping the entries with `"boardId": 9143`, active first, then future. Filter by board ID,
+   not name: an AIQ-named sprint can sit on another board. Only open sprints are listed, and
+   `sprint-add` only accepts those. Move it with `jira sprint-add <id> <TICKET> --project BOT`
+   and confirm with `jira get`. Check this even when the ticket is already Done.
 
 ## What the script checks
 
