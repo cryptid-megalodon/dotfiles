@@ -7,7 +7,8 @@ printf "%s" "${input:-"{}"}" | jq '. * {
   "theme": "dark",
   "agentPushNotifEnabled": true,
   "inputNeededNotifEnabled": true,
-  "permissions": { "defaultMode": "auto" }
+  "permissions": { "defaultMode": "auto" },
+  "env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/repos/claude-plugins/plugins" }
 }
 | .permissions.allow = ((.permissions.allow // []) + ["Bash(gh pr merge *)"] | unique)
 | .hooks.PreToolUse = [(.hooks.PreToolUse // [])[]
