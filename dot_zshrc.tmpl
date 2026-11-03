@@ -80,6 +80,13 @@ export AWS_PROFILE=readonly-prod
 # `whoop auth token --dev` refreshes it.
 command -v whoop >/dev/null && export WHOOP_API_KEY=$(whoop auth token --dev --no-fetch 2>/dev/null)
 
+{{ if eq .chezmoi.os "darwin" -}}
+# OpenAI key for the pr-review skill's cross-family verifier, read from the
+# Keychain (`security add-generic-password -a "$USER" -s openai-api-key -w`).
+export OPENAI_API_KEY=$(security find-generic-password -a "$USER" -s openai-api-key -w 2>/dev/null)
+export PR_REVIEW_OPENAI_MODEL=gpt-6.1-sol
+
+{{ end -}}
 {{ end -}}
 
 # Local, machine-specific overrides that don't belong in the repo.
