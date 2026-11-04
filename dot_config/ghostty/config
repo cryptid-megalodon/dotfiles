@@ -9,3 +9,5 @@ copy-on-select = clipboard
 confirm-close-surface = false
 # Send Option as Alt (macOS only) so tmux M- bindings work.
 macos-option-as-alt = true
+# Global hotkey: open a new window from any app (needs Accessibility permission).
+keybind = global:ctrl+cmd+t=new_window
