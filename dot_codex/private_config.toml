@@ -1,0 +1,12 @@
+model = "gpt-6.1-terra"
+model_reasoning_effort = "low"
+default_permissions = "workspace-network"
+
+[permissions.workspace-network]
+extends = ":workspace"
+
+[permissions.workspace-network.network]
+enabled = true
+
+[tui]
+screen_reader_detection_done = true
