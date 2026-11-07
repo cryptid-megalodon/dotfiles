@@ -56,6 +56,7 @@ every key, including the no-prefix ones (their notes say so).
 | --- | --- |
 | `C-h` / `C-j` / `C-k` / `C-l` | Move to the pane or nvim split left/down/up/right (no prefix; pairs with vim-tmux-navigator in nvim) |
 | `prefix h` / `j` / `k` / `l` | Move to the pane left/down/up/right |
+| `Alt-w` / `Alt-a` / `Alt-s` / `Alt-d` | Move to the pane up/left/down/right (no prefix; Ghostty sends Option as Alt on macOS) |
 | `prefix \|` or `\` or `%` | Split side by side, in the current dir |
 | `prefix -` or `_` or `"` | Split top/bottom, in the current dir |
 | `prefix c` | New window, in the current dir |
