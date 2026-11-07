@@ -1,0 +1,25 @@
+#!/bin/sh
+# Install the pinned Handy release and configure Ubuntu's input service.
+set -eu
+
+{{ if eq .chezmoi.os "linux" -}}
+if ! command -v handy >/dev/null 2>&1; then
+    if [ "$(dpkg --print-architecture)" != amd64 ]; then
+        echo "==> Handy: install the appropriate release manually for this architecture"
+        exit 0
+    fi
+    deb=$(mktemp --suffix=.deb)
+    trap 'rm -f "$deb"' EXIT
+    curl -fsSL https://github.com/cjpais/Handy/releases/download/v0.10.0/Handy_0.10.0_amd64.deb -o "$deb"
+    echo "cd91f0eb445a1b20a0ed7391a77cb1174d1e5c83d1696491e1228d13e2364684  $deb" | sha256sum -c -
+    sudo apt-get install -y "$deb"
+fi
+
+if ! id -nG | tr ' ' '\n' | grep -qx input; then
+    sudo usermod -aG input "$(id -un)"
+    echo "==> Handy: log out and back in to activate input group membership"
+fi
+if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    systemctl --user enable --now ydotool.service
+fi
+{{ end -}}

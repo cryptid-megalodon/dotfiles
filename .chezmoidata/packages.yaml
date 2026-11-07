@@ -20,6 +20,7 @@ packages:
     casks:
       - ghostty
       - visual-studio-code
+      - handy
     # Personal machines only; on work machines these apps are managed outside brew.
     casks_personal:
       - firefox
@@ -41,6 +42,8 @@ packages:
     - vlc
     - deluge
     - gh            # from the github-cli repo below, never the snap
+    - ydotool
+    - wl-clipboard
   # Third-party apt repos, set up before `apt-get install`. Pinned above
   # Ubuntu Pro ESM so the upstream build wins.
   apt_repos:

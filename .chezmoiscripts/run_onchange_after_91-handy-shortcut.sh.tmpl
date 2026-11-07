@@ -1,0 +1,35 @@
+#!/bin/sh
+# Preserve existing GNOME shortcuts while adding Handy's Ctrl+Space toggle.
+set -eu
+
+{{ if eq .chezmoi.os "linux" -}}
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] || ! command -v gsettings >/dev/null 2>&1; then
+    echo "==> Handy: no desktop session; skipping GNOME shortcut"
+    exit 0
+fi
+python3 - <<'PY'
+import ast
+import subprocess
+
+schema = 'org.gnome.settings-daemon.plugins.media-keys'
+key = 'custom-keybindings'
+entry = 'org.gnome.settings-daemon.plugins.media-keys.custom-keybinding'
+prefix = '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/'
+
+def get(*args):
+    return subprocess.check_output(['gsettings', 'get', *args], text=True).strip()
+
+raw = get(schema, key)
+paths = ast.literal_eval(raw.removeprefix('@as '))
+path = next((p for p in paths if ast.literal_eval(get(entry + ':' + p, 'command')) == 'handy --toggle-transcription'), None)
+if path is None:
+    i = 0
+    while f'{prefix}custom{i}/' in paths:
+        i += 1
+    path = f'{prefix}custom{i}/'
+    paths.append(path)
+    subprocess.run(['gsettings', 'set', schema, key, repr(paths)], check=True)
+for field, value in [('name', 'handy'), ('command', 'handy --toggle-transcription'), ('binding', '<Control>space')]:
+    subprocess.run(['gsettings', 'set', entry + ':' + path, field, value], check=True)
+PY
+{{ end -}}

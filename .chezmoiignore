@@ -11,4 +11,5 @@ Library
 {{ if ne .chezmoi.os "linux" }}
 # Linux-only paths.
 .config/Code
+.local/share/com.pais.handy
 {{ end }}
