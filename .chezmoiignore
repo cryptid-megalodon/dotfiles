@@ -3,6 +3,11 @@ README.md
 CLAUDE.md
 LICENSE
 
+{{ if ne .machine "work" }}
+# Work-only paths.
+wolf-os-poc
+{{ end }}
+
 {{ if ne .chezmoi.os "darwin" }}
 # macOS-only paths.
 Library
