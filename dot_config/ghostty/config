@@ -11,5 +11,7 @@ confirm-close-surface = false
 macos-option-as-alt = true
 # Global hotkey: open a new window from any app (needs Accessibility permission).
 keybind = global:ctrl+cmd+t=new_window
-# New tab with Ctrl+T on every platform (shadows fzf's Ctrl+T and Claude's task-view toggle).
-keybind = ctrl+t=new_tab
+# Replace the default close_tab on Ctrl+Shift+W with the done-r skill: types
+# /done-r + Enter into the focused pane (only press it with claude idle and its
+# input empty). Ctrl+Shift+T stays the default new_tab.
+keybind = ctrl+shift+w=text:/done-r\r
