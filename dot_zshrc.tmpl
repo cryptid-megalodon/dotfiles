@@ -99,5 +99,14 @@ autoload -Uz compinit
 (( ${+_comps[docker]} )) || compinit
 
 {{ end -}}
+# --- Ghostty: auto tmux + claude ----------------------------------------------
+# Each new Ghostty tab/window starts a tmux session running claude (see
+# ~/.local/bin/tab-start). Skip with NO_TAB_START=1. When tmux detaches or ends
+# cleanly this shell exits too, closing the tab; on failure you keep this shell.
+if [[ $TERM_PROGRAM == ghostty && -z $TMUX && -z $NO_TAB_START && -t 0 ]] \
+    && command -v tmux >/dev/null && command -v claude >/dev/null; then
+  ~/.local/bin/tab-start && exit
+fi
+
 # --- Prompt (keep last) -------------------------------------------------------
 command -v starship >/dev/null && eval "$(starship init zsh)"

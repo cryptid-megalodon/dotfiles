@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+# tab-start — run by ~/.zshrc in every new Ghostty tab/window.
+#
+# Creates a fresh, detached tmux session, starts claude in it, and attaches.
+# The session is unnamed (tmux numbers it) and outlives the terminal: closing
+# the tab only detaches. Orphans are for the weekly sweep to reap.
+#
+# claude is typed into the pane's own zsh rather than being the pane's
+# command, so ctrl-z / fg and quitting claude both land in a normal shell.
+#
+# Layout lives here: add split-window / new-window / send-keys lines below.
+# Overrides: TAB_START_CMD (default: claude).
+
+s=$(tmux new-session -d -P -F '#{session_name}' -c "$PWD") || exit 1
+
+tmux send-keys -t "$s" "${TAB_START_CMD:-claude}" Enter
+
+exec tmux attach-session -t "$s"
