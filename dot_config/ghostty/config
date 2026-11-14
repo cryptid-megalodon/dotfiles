@@ -11,3 +11,5 @@ confirm-close-surface = false
 macos-option-as-alt = true
 # Global hotkey: open a new window from any app (needs Accessibility permission).
 keybind = global:ctrl+cmd+t=new_window
+# New tab with Ctrl+T on every platform (shadows fzf's Ctrl+T and Claude's task-view toggle).
+keybind = ctrl+t=new_tab
