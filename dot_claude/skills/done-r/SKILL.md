@@ -9,14 +9,17 @@ disable-model-invocation: true
 
 Tears down everything `tab-start` set up for this session, leaving no orphans or leftover files.
 
-Run it, then stop — don't start more work, because Claude exits a few seconds after this turn ends:
+First ask the user, in one line and without running anything: "Tear down this session for good? Type y to
+confirm." Then stop and wait for their reply. Only a reply of `y` (or `yes`, any case) counts; anything else
+cancels — say "Cancelled." and do nothing.
+
+On `y`, run it, then stop — don't start more work, because Claude exits a few seconds after this turn ends:
 
 ```bash
 ~/.claude/skills/done-r/done-r.sh
 ```
 
-Reply with one line saying what it announced. Nothing to confirm: the user invoked it on purpose, and the
-deletion can't be undone.
+Reply with one line saying what it announced. The deletion can't be undone, which is why the `y` is required.
 
 What the detached worker does, in order:
 1. Types `/exit` into this pane and waits for the shell prompt. If Claude doesn't exit, it stops and deletes
