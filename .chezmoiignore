@@ -12,4 +12,5 @@ Library
 # Linux-only paths.
 .config/Code
 .local/share/com.pais.handy
+.local/bin/wl-copy
 {{ end }}

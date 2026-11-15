@@ -1,0 +1,4 @@
+#!/bin/sh
+# Run the real wl-copy in its own session so Ctrl+Z on the calling job (e.g. a
+# backgrounded claude) doesn't stop the clipboard owner and hang wl-paste.
+exec setsid -f /usr/bin/wl-copy "$@"
