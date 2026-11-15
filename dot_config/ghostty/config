@@ -15,3 +15,6 @@ keybind = global:ctrl+cmd+t=new_window
 # /done-r + Enter into the focused pane (only press it with claude idle and its
 # input empty). Ctrl+Shift+T stays the default new_tab.
 keybind = ctrl+shift+w=text:/done-r\r
+# Ctrl+V pastes from the clipboard in zsh (default is Ctrl+Shift+V). Claude Code never sees
+# Ctrl+V with this on, so its image paste breaks.
+keybind = ctrl+v=paste_from_clipboard
