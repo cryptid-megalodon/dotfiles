@@ -1,18 +1,41 @@
 #!/usr/bin/env zsh
 # tab-start — run by ~/.zshrc in every new Ghostty tab/window.
 #
-# Creates a fresh, detached tmux session, starts claude in it, and attaches.
-# The session is unnamed (tmux numbers it) and outlives the terminal: closing
-# the tab only detaches. Orphans are for the weekly sweep to reap.
+# Asks for a session name, creates a fresh, detached tmux session, starts
+# claude in it, and attaches. The name goes to the tmux session (so the tab
+# title follows it) and to claude --name, like the rename-r skill. Press Enter
+# to skip it and tmux numbers the session; ctrl-c leaves you in a plain shell.
+# The session outlives the terminal: closing the tab only detaches. Orphans
+# are for the weekly sweep to reap.
 #
 # claude is typed into the pane's own zsh rather than being the pane's
 # command, so ctrl-z / fg and quitting claude both land in a normal shell.
 #
 # Layout lives here: add split-window / new-window / send-keys lines below.
-# Overrides: TAB_START_CMD (default: claude).
+# Overrides: TAB_START_CMD (default: claude; a custom command gets no --name).
 
-s=$(tmux new-session -d -P -F '#{session_name}' -c "$PWD") || exit 1
+setopt extended_glob
 
-tmux send-keys -t "$s" "${TAB_START_CMD:-claude}" Enter
+while true; do
+  print -rn -- "Session name (Enter for a number): "
+  read -r name || exit 1
+  # tmux session names can't contain ':' or '.'; trim surrounding whitespace.
+  name=${${${name//[:.]/-}##[[:space:]]#}%%[[:space:]]#}
+  [[ -z $name ]] && break
+  tmux has-session -t "=$name" 2>/dev/null || break
+  print -r -- "A tmux session named '$name' already exists; pick another."
+done
+
+args=(-d -P -F '#{session_id}' -c "$PWD")
+cmd=${TAB_START_CMD:-claude}
+if [[ -n $name ]]; then
+  args+=(-s "$name")
+  [[ -z $TAB_START_CMD ]] && cmd+=" --name ${(qq)name}"
+fi
+
+# Target by session id: a typed name like "2" could resolve to a window index.
+s=$(tmux new-session "${args[@]}") || exit 1
+
+tmux send-keys -t "$s:" "$cmd" Enter
 
 exec tmux attach-session -t "$s"
