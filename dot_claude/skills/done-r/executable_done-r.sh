@@ -6,6 +6,11 @@
 # after the turn ends, because claude has to be gone before its files are deleted.
 set -u
 
+# macOS has no setsid command; perl's POSIX::setsid does the same job there.
+if ! command -v setsid >/dev/null; then
+  setsid() { perl -MPOSIX -e 'POSIX::setsid(); exec { $ARGV[0] } @ARGV or die "exec $ARGV[0]: $!\n"' -- "$@"; }
+fi
+
 if [ "${1:-}" != "--worker" ]; then
   [ -n "${TMUX_PANE:-}" ] || { echo "not inside tmux; use /exit" >&2; exit 1; }
   [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] || { echo "no CLAUDE_CODE_SESSION_ID; run this from inside claude" >&2; exit 1; }

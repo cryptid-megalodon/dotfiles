@@ -3,6 +3,11 @@
 # set-titles) the Ghostty tab, in one go. Run from inside Claude's own Bash tool.
 set -eu
 
+# macOS has no setsid command; perl's POSIX::setsid does the same job there.
+if ! command -v setsid >/dev/null; then
+  setsid() { perl -MPOSIX -e 'POSIX::setsid(); exec { $ARGV[0] } @ARGV or die "exec $ARGV[0]: $!\n"' -- "$@"; }
+fi
+
 name="$*"
 [ -n "$name" ] || { echo "usage: rename-r.sh <name>" >&2; exit 2; }
 [ -n "${TMUX_PANE:-}" ] || { echo "not inside tmux; nothing to rename (use /rename)" >&2; exit 1; }
