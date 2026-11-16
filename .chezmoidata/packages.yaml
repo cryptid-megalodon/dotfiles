@@ -20,11 +20,11 @@ packages:
     casks:
       - ghostty
       - visual-studio-code
-      - handy
     # Personal machines only; on work machines these apps are managed outside brew.
     casks_personal:
       - firefox
       - bitwarden
+      - handy       # work laptops block the sudo its install into /Applications needs
 
   # Linux (Debian/Ubuntu).
   apt:
