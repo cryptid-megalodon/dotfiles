@@ -11,9 +11,12 @@ confirm-close-surface = false
 macos-option-as-alt = true
 # Global hotkey: open a new window from any app (needs Accessibility permission).
 keybind = global:ctrl+cmd+t=new_window
-# Replace the default close_tab on Ctrl+Shift+W with the done-r skill: types
-# /done-r + Enter into the focused pane (only press it with claude idle and its
-# input empty). Ctrl+Shift+T stays the default new_tab.
+# Ctrl+Shift+T opens a new tab on every OS. It's the Linux default; macOS only
+# binds Cmd+T, which still works.
+keybind = ctrl+shift+t=new_tab
+# Ctrl+Shift+W runs the done-r skill: types /done-r + Enter into the focused
+# pane (only press it with claude idle and its input empty). On Linux this
+# replaces the default close_tab.
 keybind = ctrl+shift+w=text:/done-r\r
 # Ctrl+V pastes from the clipboard in zsh (default is Ctrl+Shift+V). Claude Code never sees
 # Ctrl+V with this on, so its image paste breaks.
