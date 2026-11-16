@@ -47,6 +47,15 @@
     "**/compose.*.yml",
     "**/compose.*.yaml"
   ],
+  "claudeCode.hideOnboarding": true,
+  "diffEditor.renderSideBySide": true,
+  "diffEditor.useInlineViewWhenSpaceIsLimited": false,
+  "githubPullRequests.pullBranch": "never",
+  "workbench.editorAssociations": {
+    "*.copilotmd": "vscode.markdown.preview.editor",
+    "*.md": "vscode.markdown.editor"
+  },
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
 
   "git.openRepositoryInParentFolders": "always"
 }
