@@ -10,3 +10,7 @@ enabled = true
 
 [tui]
 screen_reader_detection_done = true
+{{ if eq .machine "personal" }}
+[projects."{{ .chezmoi.homeDir }}/Projects"]
+trust_level = "trusted"
+{{ end -}}
