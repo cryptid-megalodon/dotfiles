@@ -153,8 +153,9 @@ a question.
 
 Severity from `JAVA_RULES/reference/severity.md` (it applies to Python too), mapped to WHOOP's
 labels from `software-how-to/pull-requests/pr-review-guidelines.md`: Blocking → `[Blocking]`,
-Should fix → `[Important]`, Nit → `[Suggestion]`, plus `[Question]`. At most three
-`[Suggestion]`s, and only when nothing above them survived.
+Should fix → `[Important]`, Nit → `[Suggestion]`, plus `[Question]`. Draft at most three
+`[Suggestion]`s, and only when nothing above them survived. Every other verified nit goes in the
+**Also noticed** section of `review.md` instead — verified, so not noise, but not worth a comment.
 
 Each comment:
 
@@ -171,6 +172,24 @@ finding that can't anchor to a diff line and any skipped files), then each comme
 `path:line`, then a ledger table — `#`, label, one-line claim, status (`drafted`). Show the user
 the drafts in the terminal and give the file path.
 
+If any verified nits weren't drafted, end `review.md` with an **Also noticed** section, and omit
+it when there are none:
+
+```markdown
+<details>
+<summary>Also noticed: 2 verified nits, not drafted</summary>
+
+1. `SyncService.java:201` — `MAX_RETRIES` is 3 here but 5 in `RetryConfig.java:18`.
+2. `MemberMapper.java:33` — `Optional.get()` unchecked; safe only because `MemberController.java:58` filters nulls.
+
+</details>
+```
+
+One line per nit: `path:line` and what's off, with no fix and no suggestion block. Number the
+nits separately from the comments. In the terminal, give only the summary line. This section never
+goes on GitHub, in the pending review's body or its comments. If the user says "draft nit N",
+promote that nit to a full `[Suggestion]` comment and add it to the ledger.
+
 **Teammate review.** Ask whether to create a **pending review** on the PR. On yes:
 
 1. Check each comment's line is on the RIGHT side of a hunk in `pr.diff`; move it to the nearest
@@ -186,8 +205,9 @@ Tell the user it's waiting in the PR's "Files changed" tab to edit and submit.
 
 **Self-review.** In the same message as the drafts, ask the user to decide each comment — apply,
 skip, or apply a different fix they describe (e.g. "apply 1 and 3, skip 2") — and to answer each
-`[Question]`. Don't offer to post, and don't ask whether to post or apply: applying is the only
-path. Then carry out their reply:
+`[Question]`. They may also pick nits from **Also noticed** ("apply 1, 2 and nits 1, 3"); an
+unpicked nit needs no decision. Don't offer to post, and don't ask whether to post or apply:
+applying is the only path. Then carry out their reply:
 
 1. **Use the branch's worktree.** Find `headRef` in `git -C ~/wolf-os-poc/repos/<repo> worktree
    list`; if no worktree has it, create one per the workspace CLAUDE.md, checking out the
@@ -214,5 +234,6 @@ Update the ledger in `review.md` from what actually happened: `posted`, `dropped
 `author fixed`, `author pushed back` (self-review: `applied`, `skipped by user`, `answered`, plus
 any change the answer led to). When the user drops or skips a draft or an author pushes back for a
 valid reason, add a one-line entry to `SKILL_DIR/reference/suppressions.md` saying what not to
-flag and why. If the pushback shows a rule in `JAVA_RULES` or `PY_RULES` is wrong, tell the user
+flag and why. Leaving an **Also noticed** nit alone is not a dismissal, so add no suppression
+for it. If the pushback shows a rule in `JAVA_RULES` or `PY_RULES` is wrong, tell the user
 it belongs upstream in `WhoopInc/agentic-tooling-rules` — don't edit the marketplace clone.
