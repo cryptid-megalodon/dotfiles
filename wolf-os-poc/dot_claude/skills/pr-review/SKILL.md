@@ -5,7 +5,7 @@ description: Review a pull request and draft review comments. On a teammate's PR
 
 # PR Review
 
-**Skill version: 2.0.0.** This line is the only place the version is written; `<version>` below
+**Skill version: 3.0.0.** This line is the only place the version is written; `<version>` below
 always means this number. Every review records it (step 7) so reviews can be compared across
 versions. Any change to this skill, its scripts, or its references bumps it and gets an entry in
 `SKILL_DIR/CHANGELOG.md`, in the same commit.
@@ -47,7 +47,7 @@ adjudication.
 | Correctness finders, OpenAI (one per chunk) | `scripts/codex_find.py` | `gpt-6.2-astra` | `high` |
 | Conventions finder | `Agent` | `opus` (Opus 5.5) | `medium` |
 | Claude verifiers | `Agent` | `opus` (Opus 5.5) | `medium` |
-| OpenAI verifier | `scripts/codex_verify.py` | `gpt-6.1-sol` | `medium` |
+| OpenAI verifier | `scripts/codex_verify.py` | `gpt-6.2-sol` | `medium` |
 
 Pass `model` and `effort` explicitly on every `Agent` call, and `--model`/`--effort` on both
 scripts, so neither the session's settings nor the user's Codex config leak in. Both OpenAI
@@ -63,7 +63,7 @@ pr-review <version> configuration
   Main agent           <session model> · effort <level> (from settings.json)
   Correctness finders  Claude fable · high   |   OpenAI gpt-6.2-astra · high (codex <codex version>)
   Conventions finder   Claude opus · medium
-  Verifiers            Claude opus · medium   |   OpenAI gpt-6.1-sol · medium
+  Verifiers            Claude opus · medium   |   OpenAI gpt-6.2-sol · medium
   OpenAI access        codex logged in via <method>|not logged in
 ```
 
@@ -189,7 +189,7 @@ Start both in one message:
   ```bash
   python3 SKILL_DIR/scripts/codex_verify.py --root <worktree> --candidates candidates.json \
     --intent intent.md --diff pr.diff --out openai-verdicts.json \
-    --model gpt-6.1-sol --effort medium
+    --model gpt-6.2-sol --effort medium
   ```
   It runs one `codex exec` per candidate, so the OpenAI verifier can read anything, run git, and
   trace callers the way the Claude verifier can. It can run commands that write nothing (a
@@ -279,7 +279,7 @@ what actually ran, not what the configuration table says should have:
     "openai_correctness_finder": {"model": "gpt-6.2-astra", "effort": "high"},
     "conventions_finder": {"model": "opus", "effort": "medium"},
     "claude_verifier": {"model": "opus", "effort": "medium"},
-    "openai_verifier": {"model": "gpt-6.1-sol", "effort": "medium"},
+    "openai_verifier": {"model": "gpt-6.2-sol", "effort": "medium"},
     "codex_version": "<codex version>", "codex_login": "ChatGPT | API key | none"
   },
   "chunks": 3,

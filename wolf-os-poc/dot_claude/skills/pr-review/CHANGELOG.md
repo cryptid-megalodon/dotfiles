@@ -9,6 +9,10 @@ verifying alone. Patch: wording only.
 Reviews made before 2.0.0 have no version recorded and no `run-<k>.json`. Use the `review.md`
 date to tell them apart; any with an "Also noticed" section are 1.1.0.
 
+## 3.0.0 — 2026-11-22
+
+- OpenAI verifier: `gpt-6.2-sol`, medium (was `gpt-6.1-sol`).
+
 ## 2.0.0 — 2026-11-22
 
 - Pinned the model and effort for every stage, printed before the review starts:

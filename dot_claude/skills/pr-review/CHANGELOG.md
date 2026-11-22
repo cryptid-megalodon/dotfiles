@@ -10,6 +10,10 @@ The scripts in `scripts/` render from `.chezmoitemplates/pr-review/` in dotfiles
 with the work copy (`wolf-os-poc/dot_claude/skills/pr-review`). A change there bumps both copies'
 versions, with an entry in both changelogs.
 
+## 2.0.0 — 2026-11-22
+
+- OpenAI verifier: `gpt-6.2-sol`, medium (was `gpt-6.1-sol`).
+
 ## 1.0.0 — 2026-11-22
 
 - First home version, derived from the work skill at 2.0.0, with the same pipeline, models,
