@@ -1,9 +1,14 @@
 ---
 name: pr-review
-description: Review a pull request and draft review comments. On a teammate's PR, drafts comments for the user to post; on the user's own PR, shows what the comments would be, takes the user's apply/skip decisions and answers, and applies them to the branch. Runs parallel finders, then a blind Claude verifier and an OpenAI cross-family verifier, and drafts only what survives. Use when the user asks to review a teammate's PR, self-review their own PR before sending it for human review, draft PR comments, or re-review a PR. For the user's own uncommitted diff, use `/code-review` instead.
+description: Review a pull request and draft review comments. On a teammate's PR, drafts comments for the user to post; on the user's own PR, shows what the comments would be, takes the user's apply/skip decisions and answers, and applies them to the branch. Runs parallel Claude and OpenAI finders, then a blind Claude verifier and an OpenAI cross-family verifier, and drafts only what survives. Use when the user asks to review a teammate's PR, self-review their own PR before sending it for human review, draft PR comments, or re-review a PR. For the user's own uncommitted diff, use `/code-review` instead.
 ---
 
 # PR Review
+
+**Skill version: 2.0.0.** This line is the only place the version is written; `<version>` below
+always means this number. Every review records it (step 7) so reviews can be compared across
+versions. Any change to this skill, its scripts, or its references bumps it and gets an entry in
+`SKILL_DIR/CHANGELOG.md`, in the same commit.
 
 Runs in one of two modes, set in step 1 by who wrote the PR:
 
@@ -18,13 +23,58 @@ Runs in one of two modes, set in step 1 by who wrote the PR:
 The pipeline exists because a single review pass is noisy: developers reject over half of AI review
 comments, mostly as false positives, redundant, or out of step with intent and conventions. So:
 lean context per finder, a verifier that never sees the finder's reasoning, a second model family
-to break correlated blind spots, and a hard rule that every finding names a concrete failure.
+at both finding and verifying to break correlated blind spots (much of the code under review is
+Claude-written, so Claude alone tends to miss what Claude got wrong), and a hard rule that every
+finding names a concrete failure.
 
 Paths below: `SKILL_DIR` is this skill's directory; `JAVA_RULES` is
 `~/.claude/plugins/marketplaces/whoop-marketplace/plugins/java/skills/code-review` and
 `PY_RULES` is `~/.claude/plugins/marketplaces/whoop-marketplace/plugins/ml/skills/review-pr`
 (both auto-updating marketplace clones; no plugin install needed). Review artifacts go in
 `~/wolf-os-poc/projects/pr-reviews/<repo>-<n>/`.
+
+## Model configuration
+
+Every stage runs at a fixed model and reasoning level. Effort is spent where a mistake can't be
+caught later: everything after the finders only filters, so a bug a correctness finder misses is
+gone for good, while a verifier's mistake can still be caught by the other model family or by the
+adjudication.
+
+| Stage | Runs as | Model | Effort |
+|---|---|---|---|
+| Main agent: intent, merge, adjudication, drafting | this session | session model | session effort |
+| Correctness finders, Claude (one per chunk) | `Agent` | `fable` (Fable 5.2) | `high` |
+| Correctness finders, OpenAI (one per chunk) | `scripts/codex_find.py` | `gpt-6.2-astra` | `high` |
+| Conventions finder | `Agent` | `opus` (Opus 5.5) | `medium` |
+| Claude verifiers | `Agent` | `opus` (Opus 5.5) | `medium` |
+| OpenAI verifier | `scripts/codex_verify.py` | `gpt-6.1-sol` | `medium` |
+
+Pass `model` and `effort` explicitly on every `Agent` call, and `--model`/`--effort` on both
+scripts, so neither the session's settings nor the user's Codex config leak in. Both OpenAI
+stages run through `codex exec` in a read-only sandbox at the review worktree. The skill can't
+set the main agent's level; it only reports it.
+
+**Print the configuration first**, before step 1, so the user knows what the review runs on.
+Check `codex --version` and `codex login status`. Take the session effort from `modelSettings` in `~/.claude/settings.json` for the
+session's model, which misses a `/effort` change made this session, so say so. Print:
+
+```
+pr-review <version> configuration
+  Main agent           <session model> · effort <level> (from settings.json)
+  Correctness finders  Claude fable · high   |   OpenAI gpt-6.2-astra · high (codex <codex version>)
+  Conventions finder   Claude opus · medium
+  Verifiers            Claude opus · medium   |   OpenAI gpt-6.1-sol · medium
+  OpenAI access        codex logged in via <method>|not logged in
+```
+
+Add a warning line for each of these:
+
+- the main agent's effort is below `high`: adjudication is the final call with nothing checking it;
+- `codex` is missing or not logged in: the OpenAI finders and verifier will both be skipped;
+- `codex` is logged in with ChatGPT rather than an API key: code goes out under the ChatGPT
+  plan's data terms, not the API's.
+
+Then continue without waiting; the user interrupts if they want something changed.
 
 ## 1. Pin the PR and gather intent
 
@@ -87,10 +137,23 @@ file in the review summary — never truncate silently.
 
 ## 4. Find (parallel subagents)
 
-Dispatch in one message, using `SKILL_DIR/reference/finder-brief.md` as the template:
+Dispatch in one message, using `SKILL_DIR/reference/finder-brief.md` as the template, at the
+models and efforts in the configuration table:
 
 - **One correctness finder per chunk** — recall-oriented bug hunting in that chunk. For Python,
   include `PY_RULES/logic/SKILL.md` as its checklist.
+- **One OpenAI correctness finder per chunk** — the same chunks and the same filled brief,
+  byte for byte, so the only difference is the model family. Write each chunk's filled
+  correctness brief to `briefs/correctness-<k>.md` in the review directory, then start, in the
+  same message as the Claude finders:
+  ```bash
+  python3 SKILL_DIR/scripts/codex_find.py --root <worktree> \
+    --briefs briefs/correctness-*.md --out-dir openai-findings \
+    --model gpt-6.2-astra --effort high
+  ```
+  It runs `codex exec` per chunk in a read-only sandbox at the worktree, with the user's Codex
+  config ignored, and writes `openai-findings/correctness-<k>.json`. If `codex` is unavailable or
+  a chunk fails, continue with the Claude finders for it and note the gap in the summary.
 - **One conventions finder** over the whole diff with the routed rule files from step 3.
 - **Contract check** (Java): if the diff changes a public signature, enum value, JSON field, or
   anything in `api-commons`/`java-api-clients`/a shared module, the conventions finder runs the
@@ -102,16 +165,19 @@ diff. Do not add your own hunches about what is wrong — finders should start u
 ## 5. Merge candidates
 
 Collect every candidate into `candidates.json`: `id`, `path`, `line`, `claim`,
-`failure_scenario`, `rule` (or null), `finder_severity`. Drop and merge here:
+`failure_scenario`, `rule` (or null), `finder_severity`, `found_by` (`claude`, `openai`, or
+`both`). Drop and merge here:
 
-- duplicates across finders (keep the most concrete failure scenario);
+- duplicates across finders (keep the most concrete failure scenario; when both families found
+  it, set `found_by` to `both`);
 - anything on the already-raised list, on the Greptile deferral table in `false-positives.md`, or
   in `suppressions.md`;
 - anything on lines the PR did not touch, unless the PR causes the breakage elsewhere;
 - anything CI catches (compile, type, lint, Spotless);
 - candidates with no concrete failure scenario and no rule behind them.
 
-Strip each finder's reasoning: verifiers receive only location, claim, and failure scenario.
+Strip each finder's reasoning: verifiers receive only location, claim, and failure scenario —
+never `found_by`, so neither family knows whose finding it is checking.
 
 ## 6. Verify (two families, in parallel)
 
@@ -121,12 +187,15 @@ Start both in one message:
   ≤6 candidates.
 - **OpenAI verifier**: same brief, same candidates, via
   ```bash
-  python3 SKILL_DIR/scripts/cross_verify.py --root <worktree> --candidates candidates.json \
-    --intent intent.md --diff pr.diff --out openai-verdicts.json
+  python3 SKILL_DIR/scripts/codex_verify.py --root <worktree> --candidates candidates.json \
+    --intent intent.md --diff pr.diff --out openai-verdicts.json \
+    --model gpt-6.1-sol --effort medium
   ```
-  It needs `OPENAI_API_KEY` and `PR_REVIEW_OPENAI_MODEL` in the environment (`--list-models` shows
-  what the key can use). Code excerpts go to OpenAI with `store: false`. If the key or model is
-  missing, say so and continue with the Claude verdicts alone — note the missing family in the
+  It runs one `codex exec` per candidate, so the OpenAI verifier can read anything, run git, and
+  trace callers the way the Claude verifier can. It can run commands that write nothing (a
+  one-line `python3 -c`, say), but not a test suite that writes build output, so the empirical
+  check below stays with the Claude verifier. A candidate whose run fails comes back as `ERROR`. If `codex` is
+  unavailable or can't use the model, say so and continue with the Claude verdicts alone — note the missing family in the
   summary.
 
 **Empirical check.** For a `Blocking` or `Important` candidate whose failure a single unit test can
@@ -139,7 +208,8 @@ any amount of agreement.
 
 | Claude | OpenAI | Outcome |
 |---|---|---|
-| CONFIRMED | CONFIRMED or unavailable | keep |
+| CONFIRMED | CONFIRMED, or unavailable/`ERROR` | keep |
+| REFUTED | unavailable/`ERROR` | drop; if it was `ERROR`, note the missing verdict in the summary |
 | CONFIRMED | REFUTED | read the refutation's evidence; keep only if it's wrong |
 | REFUTED | CONFIRMED | same, in the other direction |
 | REFUTED | REFUTED | drop |
@@ -167,9 +237,11 @@ Each comment:
 - uses a GitHub ```` ```suggestion ```` block when the fix is a few lines, with `start_line`/`line`
   covering exactly the lines it replaces.
 
-Write `projects/pr-reviews/<repo>-<n>/review.md`: a 1–2 sentence `[claude:]` review body (plus any
+Write `projects/pr-reviews/<repo>-<n>/review.md`. Its first line is
+`<!-- pr-review <version> · pass <k> · <head sha> · <local date and time with zone> -->`, which stays
+out of anything posted. Then a 1–2 sentence `[claude:]` review body (plus any
 finding that can't anchor to a diff line and any skipped files), then each comment under
-`path:line`, then a ledger table — `#`, label, one-line claim, status (`drafted`). Show the user
+`path:line`, then a ledger table — `#`, label, one-line claim, found by, status (`drafted`). Show the user
 the drafts in the terminal and give the file path.
 
 If any verified nits weren't drafted, end `review.md` with an **Also noticed** section, and omit
@@ -189,6 +261,49 @@ One line per nit: `path:line` and what's off, with no fix and no suggestion bloc
 nits separately from the comments. In the terminal, give only the summary line. This section never
 goes on GitHub, in the pending review's body or its comments. If the user says "draft nit N",
 promote that nit to a full `[Suggestion]` comment and add it to the ledger.
+
+**Run record.** Alongside `review.md`, write `run-<k>.json`, where `k` is the pass: 1 for the
+first review, 2 for the first re-review, and so on. This is what later analysis reads, so record
+what actually ran, not what the configuration table says should have:
+
+```json
+{
+  "skill_version": "<version>",
+  "pass": 1,
+  "started_at": "2026-11-22T15:04:00-05:00",
+  "repo": "<repo>", "pr": 123, "head_sha": "<sha>", "since_sha": null,
+  "mode": "teammate | self",
+  "config": {
+    "main": {"model": "<session model id>", "effort": "<level>"},
+    "claude_correctness_finder": {"model": "fable", "effort": "high"},
+    "openai_correctness_finder": {"model": "gpt-6.2-astra", "effort": "high"},
+    "conventions_finder": {"model": "opus", "effort": "medium"},
+    "claude_verifier": {"model": "opus", "effort": "medium"},
+    "openai_verifier": {"model": "gpt-6.1-sol", "effort": "medium"},
+    "codex_version": "<codex version>", "codex_login": "ChatGPT | API key | none"
+  },
+  "chunks": 3,
+  "skipped_files": [],
+  "gaps": ["OpenAI finder failed on chunk 2"],
+  "findings": [
+    {"id": "c4", "found_by": "openai", "finder_severity": "Should fix",
+     "dropped_at": null, "drop_reason": null,
+     "claude_verdict": "CONFIRMED", "openai_verdict": "REFUTED", "empirical_check": "none",
+     "outcome": "drafted", "label": "[Important]", "comment": 2, "status": "drafted"}
+  ]
+}
+```
+
+- `findings` lists **every** candidate the finders returned, including ones merged or dropped,
+  so the filter's effect can be measured. `dropped_at` is `merge` or `verify` (or null) and
+  `drop_reason` says why (`duplicate of c2`, `already raised`, `CI catches it`, `REFUTED by both`).
+  Verdicts are `CONFIRMED`, `REFUTED`, `UNCERTAIN`, `ERROR`, or null if never verified.
+  `empirical_check` is `none`, `confirmed`, or `refuted`.
+- `outcome` is `drafted`, `question`, `nit` (in Also noticed), or `dropped`; `comment` is its
+  number in `review.md` (nits: `"nit 1"`).
+- `config.main` is the session's model id and effort as printed at the start; any stage that was
+  skipped gets `"model": null` and a line in `gaps`.
+- `started_at` is the local time with its offset, from `date +%Y-%m-%dT%H:%M:%S%z`.
 
 **Teammate review.** Ask whether to create a **pending review** on the PR. On yes:
 
@@ -232,7 +347,9 @@ Then run steps 3–7 on what changed since the last reviewed sha.
 
 Update the ledger in `review.md` from what actually happened: `posted`, `dropped by user`,
 `author fixed`, `author pushed back` (self-review: `applied`, `skipped by user`, `answered`, plus
-any change the answer led to). When the user drops or skips a draft or an author pushes back for a
+any change the answer led to), and set the same `status` on that finding in the `run-<k>.json`
+of the pass that produced it. Never rewrite a run file's `skill_version` or `config`: a finding
+keeps the version that found it, even when a later version follows it up. When the user drops or skips a draft or an author pushes back for a
 valid reason, add a one-line entry to `SKILL_DIR/reference/suppressions.md` saying what not to
 flag and why. Leaving an **Also noticed** nit alone is not a dismissal, so add no suppression
 for it. If the pushback shows a rule in `JAVA_RULES` or `PY_RULES` is wrong, tell the user

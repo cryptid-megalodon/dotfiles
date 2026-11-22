@@ -1,7 +1,7 @@
 # Verifier brief
 
-Shared by the Claude verifier subagents and `scripts/cross_verify.py` (which loads the block below
-as its system instructions, so keep it model-neutral). Give verifiers the claim only — never the
+Shared by the Claude verifier subagents and `scripts/codex_verify.py` (which sends the block below
+to Codex ahead of each claim, so keep it model-neutral). Give verifiers the claim only — never the
 finder's reasoning.
 
 ```
