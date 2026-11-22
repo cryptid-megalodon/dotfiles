@@ -8,6 +8,11 @@ LICENSE
 wolf-os-poc
 {{ end }}
 
+{{ if ne .machine "personal" }}
+# Personal-only paths. The home pr-review would clash with the work one.
+.claude/skills/pr-review
+{{ end }}
+
 {{ if ne .chezmoi.os "darwin" }}
 # macOS-only paths.
 Library
