@@ -3,7 +3,8 @@
 
 Runs one `codex exec` per filled finder brief (one brief per chunk, the same text the Claude
 finder for that chunk gets), in a read-only sandbox rooted at the review worktree, and writes each
-chunk's candidates as a JSON array named after the brief. Chunks run in parallel. Stdlib only.
+chunk's candidates as a JSON array named after the brief. Chunks run in parallel. With
+--usage-out, also writes each chunk's wall time and tokens for record_usage.py. Stdlib only.
 
 Requires `codex` on PATH and logged in (`codex login status`).
 """
@@ -12,10 +13,11 @@ import argparse
 import json
 import os
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from codex_run import CodexError, run_codex
+from codex_run import CodexError, now_local, run_codex, write_usage
 
 CANDIDATE = {
     "type": "object",
@@ -44,14 +46,20 @@ FORMAT_NOTE = (
 
 
 def find_one(brief_path, ctx):
+    call = {"name": brief_path.stem, "wall_seconds": None, "tokens": None, "error": None}
     try:
-        result = run_codex(ctx["root"], ctx["model"], ctx["effort"], SCHEMA,
-                           brief_path.read_text() + FORMAT_NOTE, ctx["timeout"])
+        result, stats = run_codex(ctx["root"], ctx["model"], ctx["effort"], SCHEMA,
+                                  brief_path.read_text() + FORMAT_NOTE, ctx["timeout"])
+        call.update(stats)
         candidates = result["candidates"]
-    except (CodexError, KeyError) as e:
-        return brief_path.name, str(e)
+    except CodexError as e:
+        call.update(e.stats, error=str(e))
+        return call
+    except KeyError as e:
+        call["error"] = f"no {e} in output"
+        return call
     (ctx["out_dir"] / f"{brief_path.stem}.json").write_text(json.dumps(candidates, indent=2))
-    return brief_path.name, None
+    return call
 
 
 def main():
@@ -62,6 +70,7 @@ def main():
     p.add_argument("--model", required=True)
     p.add_argument("--effort", default="high", help="model_reasoning_effort for codex")
     p.add_argument("--timeout", type=int, default=1200, help="seconds per chunk")
+    p.add_argument("--usage-out", help="where to write wall time and tokens per chunk")
     args = p.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -74,14 +83,18 @@ def main():
         "out_dir": out_dir,
     }
     briefs = [Path(b) for b in args.briefs]
+    started_at, start = now_local(), time.monotonic()
     with ThreadPoolExecutor(max_workers=min(5, len(briefs))) as pool:
-        results = list(pool.map(lambda b: find_one(b, ctx), briefs))
+        calls = list(pool.map(lambda b: find_one(b, ctx), briefs))
+    if args.usage_out:
+        write_usage(args.usage_out, "openai_correctness_finder", args.model, args.effort,
+                    started_at, round(time.monotonic() - start, 1), calls)
 
-    errors = [(name, err) for name, err in results if err]
-    print(f"{len(results) - len(errors)}/{len(results)} chunks written to {out_dir}")
-    for name, err in errors:
-        print(f"  {name}: {err}", file=sys.stderr)
-    sys.exit(1 if errors and len(errors) == len(results) else 0)
+    errors = [c for c in calls if c["error"]]
+    print(f"{len(calls) - len(errors)}/{len(calls)} chunks written to {out_dir}")
+    for c in errors:
+        print(f"  {c['name']}: {c['error']}", file=sys.stderr)
+    sys.exit(1 if errors and len(errors) == len(calls) else 0)
 
 
 if __name__ == "__main__":

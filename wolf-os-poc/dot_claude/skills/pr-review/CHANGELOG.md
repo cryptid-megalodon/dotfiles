@@ -9,6 +9,22 @@ verifying alone. Patch: wording only.
 Reviews made before 2.0.0 have no version recorded and no `run-<k>.json`. Use the `review.md`
 date to tell them apart; any with an "Also noticed" section are 1.1.0.
 
+## 3.1.0 — 2026-11-24
+
+- Each run record gets a `usage` block: wall time from `started_at`, and tokens per stage for the
+  main agent, each Claude subagent and each OpenAI call. `scripts/record_usage.py` writes it from
+  the session's transcript and from usage files the OpenAI scripts now write with `--usage-out`.
+- The OpenAI scripts run `codex exec --json` to read token counts, and take failure messages from
+  its events.
+- Agent descriptions start with their stage name, which is how subagents are attributed.
+- `started_at` is taken when the configuration is printed.
+- Runs before this version have no `usage`. `record_usage.py --session <id> --since <time>
+  --until <time>` rebuilds the Claude side from the session's transcript while it still exists
+  (Claude Code prunes transcripts after `cleanupPeriodDays`, 30 by default, and `done-r` deletes
+  its own session's). The OpenAI side can't be rebuilt: those `codex exec` runs were ephemeral
+  and their output was discarded.
+- The same change is in the home copy as 2.1.0; the scripts are shared.
+
 ## 3.0.0 — 2026-11-22
 
 - OpenAI verifier: `gpt-6.2-sol`, medium (was `gpt-6.1-sol`).

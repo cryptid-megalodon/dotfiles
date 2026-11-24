@@ -5,7 +5,7 @@ description: Review a code change and draft review comments — a GitHub PR (num
 
 # PR Review (home)
 
-**Skill version: 2.0.0.** This line is the only place the version is written; `<version>` below
+**Skill version: 2.1.0.** This line is the only place the version is written; `<version>` below
 always means this number. Every review records it (step 7) so reviews can be compared across
 versions. Any change to this skill, its scripts, or its references bumps it and gets an entry in
 `SKILL_DIR/CHANGELOG.md`, in the same commit. The scripts are shared with the work copy of this
@@ -53,9 +53,13 @@ scripts, so neither the session's settings nor the user's Codex config leak in. 
 stages run through `codex exec` in a read-only sandbox at the review worktree. The skill can't
 set the main agent's level; it only reports it.
 
+Start each `Agent` call's `description` with its stage (`Correctness finder <k>`, `Conventions
+finder`, `Verifier <k>`): the run record attributes each subagent's time and tokens by it.
+
 **Print the configuration first**, before step 1, so the user knows what the review runs on.
-Check `codex --version` and `codex login status`. Take the session effort from `modelSettings`
-in `~/.claude/settings.json` for the session's model, which misses a `/effort` change made this
+Run `date +%Y-%m-%dT%H:%M:%S%z` and keep the output as the run's `started_at`, then check
+`codex --version` and `codex login status`. Take the session effort from `modelSettings` in
+`~/.claude/settings.json` for the session's model, which misses a `/effort` change made this
 session, so say so. Print:
 
 ```
@@ -166,11 +170,13 @@ models and efforts in the configuration table:
   ```bash
   python3 SKILL_DIR/scripts/codex_find.py --root <worktree> \
     --briefs briefs/correctness-*.md --out-dir openai-findings \
-    --model gpt-6.2-astra --effort high
+    --model gpt-6.2-astra --effort high --usage-out openai-finders-usage-<pass>.json
   ```
   It runs `codex exec` per chunk in a read-only sandbox at the worktree, with the user's Codex
-  config ignored, and writes `openai-findings/correctness-<k>.json`. If `codex` is unavailable or
-  a chunk fails, continue with the Claude finders for it and note the gap in the summary.
+  config ignored, and writes `openai-findings/correctness-<k>.json`, plus each chunk's time and
+  tokens to the usage file (`<pass>` is this review's pass number, as in step 7). If `codex` is
+  unavailable or a chunk fails, continue with the Claude finders for it and note the gap in the
+  summary.
 - **One conventions finder** over the whole diff with the convention files from step 3.
 - **Contract check**: if the diff changes a public function signature, a CLI flag, a config key,
   an API route or payload, or a database schema, the conventions finder searches the repo (and
@@ -205,7 +211,7 @@ Write the intent summary to `intent.md`, then start both in one message:
   ```bash
   python3 SKILL_DIR/scripts/codex_verify.py --root <worktree> --candidates candidates.json \
     --intent intent.md --diff pr.diff --out openai-verdicts.json \
-    --model gpt-6.2-sol --effort medium
+    --model gpt-6.2-sol --effort medium --usage-out openai-verifier-usage-<pass>.json
   ```
   It runs one `codex exec` per candidate, so the OpenAI verifier can read anything, run git, and
   trace callers the way the Claude verifier can. It can run commands that write nothing (a
@@ -322,7 +328,13 @@ what actually ran, not what the configuration table says should have:
   number in `review.md` (nits: `"nit 1"`).
 - `config.main` is the session's model id and effort as printed at the start; any stage that was
   skipped gets `"model": null` and a line in `gaps`.
-- `started_at` is the local time with its offset, from `date +%Y-%m-%dT%H:%M:%S%z`.
+- `started_at` is the time taken when the configuration was printed, not when the file is
+  written.
+- `usage` is never written by hand. Right after writing the file, run
+  `python3 SKILL_DIR/scripts/record_usage.py --run run-<k>.json`. It adds the wall time from
+  `started_at` to now, tokens for the main agent and each subagent (from this session's
+  transcript) and for each OpenAI call (from the `--usage-out` files), and `gaps` naming anything
+  it couldn't count. Include the one line it prints when you show the drafts.
 
 **Someone else's PR.** Ask whether to create a **pending review** on the PR. On yes:
 
@@ -369,7 +381,7 @@ reviewed sha.
 Update the ledger in `review.md` from what actually happened: `posted`, `dropped by user`,
 `author fixed`, `author pushed back` (own change: `applied`, `skipped by user`, `answered`, plus
 any change the answer led to), and set the same `status` on that finding in the `run-<k>.json`
-of the pass that produced it. Never rewrite a run file's `skill_version` or `config`: a finding
+of the pass that produced it. Never rewrite a run file's `skill_version`, `config` or `usage`: a finding
 keeps the version that found it, even when a later version follows it up. When the user drops
 or skips a draft or an author pushes back for a valid reason, add a one-line entry to
 `DATA/suppressions.md` saying what not to flag and why, starting with the repo it applies to

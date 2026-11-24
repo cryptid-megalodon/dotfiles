@@ -3,7 +3,8 @@
 
 Runs one `codex exec` per candidate finding, with the shared verifier brief, in a read-only
 sandbox rooted at the review worktree, and writes one verdict per candidate. Candidates run in
-parallel. Stdlib only.
+parallel. With --usage-out, also writes each candidate's wall time and tokens for record_usage.py.
+Stdlib only.
 
 Requires `codex` on PATH and logged in (`codex login status`).
 """
@@ -13,10 +14,11 @@ import json
 import os
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from codex_run import CodexError, run_codex
+from codex_run import CodexError, now_local, run_codex, write_usage
 
 BRIEF = Path(__file__).resolve().parent.parent / "reference" / "verifier-brief.md"
 MAX_HUNK_CHARS = 20_000
@@ -65,12 +67,15 @@ def verify_one(candidate, ctx):
         f"Failure scenario: {candidate['failure_scenario']}\n\n"
         f"Diff for {candidate['path']}:\n```diff\n{hunks}\n```"
     )
+    call = {"name": candidate["id"], "wall_seconds": None, "tokens": None, "error": None}
     try:
-        verdict = run_codex(ctx["root"], ctx["model"], ctx["effort"], VERDICT_SCHEMA, prompt, ctx["timeout"])
+        verdict, stats = run_codex(ctx["root"], ctx["model"], ctx["effort"], VERDICT_SCHEMA, prompt, ctx["timeout"])
     except CodexError as e:
-        return {"id": candidate["id"], "verdict": "ERROR", "evidence": "", "unknown": str(e)}
+        call.update(e.stats, error=str(e))
+        return {"id": candidate["id"], "verdict": "ERROR", "evidence": "", "unknown": str(e)}, call
+    call.update(stats)
     verdict["id"] = candidate["id"]
-    return verdict
+    return verdict, call
 
 
 def main():
@@ -83,6 +88,7 @@ def main():
     p.add_argument("--model", required=True)
     p.add_argument("--effort", default="medium", help="model_reasoning_effort for codex")
     p.add_argument("--timeout", type=int, default=900, help="seconds per candidate")
+    p.add_argument("--usage-out", help="where to write wall time and tokens per candidate")
     args = p.parse_args()
 
     candidates = json.loads(Path(args.candidates).read_text())
@@ -95,9 +101,14 @@ def main():
         "intent": Path(args.intent).read_text(),
         "diff": split_diff(Path(args.diff).read_text()),
     }
+    started_at, start = now_local(), time.monotonic()
     with ThreadPoolExecutor(max_workers=min(8, len(candidates)) or 1) as pool:
-        verdicts = list(pool.map(lambda c: verify_one(c, ctx), candidates))
+        results = list(pool.map(lambda c: verify_one(c, ctx), candidates))
+    verdicts = [verdict for verdict, _ in results]
     Path(args.out).write_text(json.dumps(verdicts, indent=2))
+    if args.usage_out:
+        write_usage(args.usage_out, "openai_verifier", args.model, args.effort,
+                    started_at, round(time.monotonic() - start, 1), [call for _, call in results])
 
     errors = [v for v in verdicts if v["verdict"] == "ERROR"]
     print(f"{len(verdicts) - len(errors)}/{len(verdicts)} verdicts written to {args.out}")
