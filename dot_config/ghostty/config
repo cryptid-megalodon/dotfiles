@@ -18,6 +18,9 @@ keybind = ctrl+shift+t=new_tab
 # pane (only press it with claude idle and its input empty). On Linux this
 # replaces the default close_tab.
 keybind = ctrl+shift+w=text:/done-r\r
+# Cmd+Shift+W (macOS close_window) does nothing: it's one key off Ctrl+Shift+W,
+# and with confirm-close-surface off a slip closes every tab in the window.
+keybind = cmd+shift+w=ignore
 # Ctrl+V pastes from the clipboard in zsh (default is Ctrl+Shift+V). Claude Code never sees
 # Ctrl+V with this on, so its image paste breaks.
 keybind = ctrl+v=paste_from_clipboard
