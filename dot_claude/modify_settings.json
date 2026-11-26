@@ -8,7 +8,10 @@ printf "%s" "${input:-"{}"}" | jq '. * {
   "agentPushNotifEnabled": true,
   "inputNeededNotifEnabled": true,
   "permissions": { "defaultMode": "auto" },
-  "env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/repos/claude-plugins/plugins" }
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/repos/claude-plugins/plugins",
+    "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION": "1000"
+  }
 }
 | .permissions.allow = ((.permissions.allow // []) + ["Bash(gh pr merge *)", "Bash(jira comment *)"] | unique)
 | .hooks.PreToolUse = [(.hooks.PreToolUse // [])[]
